@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "67998510522",
+    "project_id": "posterflow-6c0cb",
+    "storage_bucket": "posterflow-6c0cb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67998510522:android:c16d193f8c745eb94ac183",
+        "android_client_info": {
+          "package_name": "com.triples.festival_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "67998510522-hp7h6om0n6mj4e7vmppq5ddh4s6tqb5c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.triples.festival_tracker",
+            "certificate_hash": "70cc79ed4824cc43c9834c992a2f12e6fe1331bf"
+          }
+        },
+        {
+          "client_id": "67998510522-vbgas2j4ef9q3e1fvhsdpf7ir17hitc8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoxsxWcxIEe1lVvmI83gSVA90X-r5TL-8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "67998510522-vbgas2j4ef9q3e1fvhsdpf7ir17hitc8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "67998510522-fkjgtjs2ok173i9a2uhscaojl6sh4hmd.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.triples.festivalTracker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

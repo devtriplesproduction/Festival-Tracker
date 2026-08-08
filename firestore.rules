@@ -1,0 +1,186 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function userDocPath() {
+      return /databases/$(database)/documents/users/$(uid());
+    }
+
+    function userDoc() {
+      return get(userDocPath());
+    }
+
+    function hasProfile() {
+      return isSignedIn() && exists(userDocPath());
+    }
+
+    function profileData() {
+      return userDoc().data;
+    }
+
+    function isActiveUser() {
+      return hasProfile()
+        && profileData().isActive != false
+        && profileData().status != 'inactive';
+    }
+
+    function role() {
+      return profileData().role;
+    }
+
+    function isAdmin() {
+      return isActiveUser() && role() == 'admin';
+    }
+
+    function isManager() {
+      return isActiveUser() && (role() == 'manager' || role() == 'admin');
+    }
+
+    function isDesigner() {
+      return isActiveUser() && (role() == 'designer' || role() == 'admin');
+    }
+
+    function isQc() {
+      return isActiveUser() && (role() == 'qc' || role() == 'admin');
+    }
+
+    /// Profile fields clients may write (no secrets / tokens / passwords).
+    function profileKeysAllowed() {
+      return request.resource.data.keys().hasOnly([
+        'id',
+        'username',
+        'displayName',
+        'email',
+        'role',
+        'companyId',
+        'status',
+        'photoURL',
+        'lastLogin',
+        'createdAt',
+        'updatedAt',
+        'isActive'
+      ]);
+    }
+
+    // ── Users (profiles only) ────────────────────────────────────────────
+
+    match /users/{userId} {
+      // Own profile: always readable when signed in (needed for post-auth
+      // authorization, inactive checks, lastLogin). Team directory: active users.
+      allow get: if isSignedIn() && (uid() == userId || isActiveUser());
+      allow list: if isActiveUser();
+
+      // Users may update their own non-privileged profile fields
+      // (displayName, photoURL, lastLogin, updatedAt). Role / isActive locked.
+      allow update: if isSignedIn()
+        && uid() == userId
+        && profileKeysAllowed()
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.isActive == resource.data.isActive
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.get('username', '') == resource.data.get('username', '');
+
+      // Admins manage team accounts (create / update / deactivate).
+      // Google Sign-In never auto-creates docs from the client without Admin.
+      allow create: if isAdmin() && profileKeysAllowed();
+      allow update: if isAdmin() && profileKeysAllowed();
+      allow delete: if isAdmin();
+    }
+
+    // ── Settings (Drive, deadlines, etc.) ────────────────────────────────
+
+    match /settings/{documentId} {
+      // Drive integration metadata: Admin read/write only.
+      // Refresh tokens must NEVER be stored here (Secret Manager only).
+      allow read: if isAdmin();
+      allow write: if isAdmin()
+        && !request.resource.data.keys().hasAny(['refreshToken', 'accessToken', 'idToken', 'clientSecret']);
+    }
+
+    // Legacy / optional deadline config path used by app repository.
+    match /_meta/{documentId} {
+      allow read: if isActiveUser();
+      allow write: if isAdmin();
+    }
+
+    // ── Domain collections ───────────────────────────────────────────────
+
+    match /festivals/{festivalId} {
+      allow read: if isActiveUser();
+      // Admins and managers may correct festival dates (lunar calendars change yearly).
+      allow write: if isManager();
+    }
+
+    match /clients/{clientId} {
+      allow read: if isManager() || isActiveUser();
+      allow create, update: if isManager();
+      allow delete: if isAdmin();
+    }
+
+    // Year packages: admin manages price; managers view progress.
+    match /client_packages/{packageId} {
+      allow read: if isManager();
+      allow write: if isAdmin();
+    }
+
+    // Price history: admin create; no client edits. Delete allowed for admin cleanup.
+    match /package_price_history/{historyId} {
+      allow read: if isManager();
+      allow create: if isAdmin();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    match /assignments/{assignmentId} {
+      allow read: if isActiveUser();
+      // Managers/Admins create; designers/QC update workflow fields.
+      allow create: if isManager();
+      allow update: if isActiveUser();
+      allow delete: if isAdmin();
+    }
+
+    match /notifications/{notifId} {
+      allow read: if isActiveUser();
+      allow update: if isActiveUser(); // e.g. mark read
+      allow create, delete: if false; // Cloud Functions / Admin SDK
+    }
+
+    match /activity_logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false; // Cloud Functions only
+    }
+
+    match /audit_logs/{logId} {
+      // Clients may append login/logout style events for their own uid.
+      allow read: if isAdmin();
+      allow create: if isSignedIn()
+        && request.resource.data.userId == uid()
+        && request.resource.data.keys().hasOnly(['action', 'userId', 'details', 'timestamp']);
+      allow update, delete: if false;
+    }
+
+    // Username → email map for pre-auth login (no roles or secrets).
+    match /login_index/{username} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['email', 'uid', 'updatedAt']);
+      allow delete: if isAdmin();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

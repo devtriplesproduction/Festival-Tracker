@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: notification-server
+    env: node
+    rootDir: notification-server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # You need to define these environment variables in your Render dashboard:
+      # - FIREBASE_PRIVATE_KEY
+      # - FIREBASE_PROJECT_ID
+      # - FIREBASE_CLIENT_EMAIL
+      # - ONESIGNAL_APP_ID
+      # - ONESIGNAL_REST_API_KEY
