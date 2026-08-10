@@ -364,12 +364,28 @@ class AppState extends ChangeNotifier {
     }
 
     if (syncAssignments) {
-      await _repo.syncClientAssignments(
+      final newAssignments = await _repo.syncClientAssignments(
         clientId: client.id,
         festivalIds: client.festivalIds,
         festivalsById: festivalsById,
         offsets: deadlineConfig,
       );
+      for (final a in newAssignments) {
+        final f = festivalsById[a.festivalId];
+        if (f != null) {
+          await _dispatchPush(
+            NotificationEventType.newAssignment,
+            targetRole: 'designer',
+            data: {
+              'clientName': client.name,
+              'festivalName': f.name,
+              'assignmentId': a.id,
+              'route': '/pipeline'
+            },
+            message: 'New job assigned: ${client.name} for ${f.name}.',
+          );
+        }
+      }
     }
     notifyListeners();
     return client;
@@ -380,12 +396,28 @@ class AppState extends ChangeNotifier {
     if (existing == null) return;
     final client = existing.copyWith(festivalIds: festivalIds);
     await _repo.upsertClient(client);
-    await _repo.syncClientAssignments(
+    final newAssignments = await _repo.syncClientAssignments(
       clientId: clientId,
       festivalIds: festivalIds,
       festivalsById: festivalsById,
       offsets: deadlineConfig,
     );
+    for (final a in newAssignments) {
+      final f = festivalsById[a.festivalId];
+      if (f != null) {
+        await _dispatchPush(
+          NotificationEventType.newAssignment,
+          targetRole: 'designer',
+          data: {
+            'clientName': client.name,
+            'festivalName': f.name,
+            'assignmentId': a.id,
+            'route': '/pipeline'
+          },
+          message: 'New job assigned: ${client.name} for ${f.name}.',
+        );
+      }
+    }
     final i = clients.indexWhere((c) => c.id == clientId);
     if (i >= 0) clients[i] = client;
     notifyListeners();
@@ -418,6 +450,20 @@ class AppState extends ChangeNotifier {
     );
     await _repo.upsertAssignment(assignment);
     assignments = [...assignments, assignment];
+    
+    final client = clientById(clientId);
+    await _dispatchPush(
+      NotificationEventType.newAssignment,
+      targetRole: 'designer',
+      data: {
+        'clientName': client?.name ?? 'Client',
+        'festivalName': festival.name,
+        'assignmentId': assignment.id,
+        'route': '/pipeline'
+      },
+      message: 'New job assigned: ${client?.name ?? 'Client'} for ${festival.name}.',
+    );
+
     notifyListeners();
     return assignment;
   }
@@ -437,6 +483,8 @@ class AppState extends ChangeNotifier {
     AssignmentStatus status, {
     UserRole? byRole,
   }) async {
+    final oldStatus = assignment.status;
+
     await _repo.setAssignmentStatus(
       assignment.id,
       status,
@@ -444,18 +492,59 @@ class AppState extends ChangeNotifier {
       sentByRole: status == AssignmentStatus.sent ? byRole?.value : null,
     );
 
+    final client = clientById(assignment.clientId);
+    final festival = festivalById(assignment.festivalId);
+    final cName = client?.name ?? 'Client';
+    final fName = festival?.name ?? 'Festival';
+
     // Dispatch real-time pushes for status changes
-    if (status == AssignmentStatus.ready) {
+    if (status == AssignmentStatus.qc && oldStatus == AssignmentStatus.design) {
+       await _dispatchPush(
+         NotificationEventType.qcUploaded, 
+         targetRole: 'manager', 
+         data: {
+           'clientName': cName,
+           'festivalName': fName, 
+           'assignmentId': assignment.id,
+           'route': '/pipeline'
+         },
+         message: 'Poster uploaded for $cName ($fName). Pending QC.',
+       );
+    } else if (status == AssignmentStatus.design && oldStatus == AssignmentStatus.qc) {
+       await _dispatchPush(
+         NotificationEventType.qcRejected, 
+         targetRole: 'designer', 
+         data: {
+           'clientName': cName,
+           'festivalName': fName, 
+           'assignmentId': assignment.id,
+           'route': '/pipeline'
+         },
+         message: 'QC Rejected for $cName ($fName). Needs revision.',
+       );
+    } else if (status == AssignmentStatus.ready && oldStatus != AssignmentStatus.ready) {
        await _dispatchPush(
          NotificationEventType.qcApproved, 
          targetRole: 'manager', 
          data: {
-           'clientName': 'Client', // Or fetch actual data if available
-           'festivalName': 'Festival', 
+           'clientName': cName,
+           'festivalName': fName, 
            'assignmentId': assignment.id,
            'route': '/pipeline'
          },
-         message: 'QC Approved for ${assignment.id}',
+         message: 'QC Approved for $cName ($fName). Ready to send.',
+       );
+    } else if (status == AssignmentStatus.sent && oldStatus != AssignmentStatus.sent) {
+       await _dispatchPush(
+         NotificationEventType.posterSent, 
+         targetRole: 'admin', 
+         data: {
+           'clientName': cName,
+           'festivalName': fName, 
+           'assignmentId': assignment.id,
+           'route': '/pipeline'
+         },
+         message: 'Poster sent for $cName ($fName).',
        );
     }
   }

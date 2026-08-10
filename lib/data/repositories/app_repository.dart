@@ -78,7 +78,7 @@ abstract class AppRepository {
   Future<void> seedDefaultFestivalsIfNeeded(int year);
 
   /// Sync assignments when client festival membership changes.
-  Future<void> syncClientAssignments({
+  Future<List<Assignment>> syncClientAssignments({
     required String clientId,
     required List<String> festivalIds,
     required Map<String, Festival> festivalsById,
@@ -594,7 +594,7 @@ class LocalAppRepository implements AppRepository {
   }
 
   @override
-  Future<void> syncClientAssignments({
+  Future<List<Assignment>> syncClientAssignments({
     required String clientId,
     required List<String> festivalIds,
     required Map<String, Festival> festivalsById,
@@ -608,23 +608,25 @@ class LocalAppRepository implements AppRepository {
       _assignments.removeWhere((x) => x.id == a.id);
     }
 
+    final newAssignments = <Assignment>[];
     final existingFestivalIds = existing.map((a) => a.festivalId).toSet();
     for (final fid in desired) {
       if (existingFestivalIds.contains(fid)) continue;
       final festival = festivalsById[fid];
       if (festival == null) continue;
-      _assignments.add(
-        Assignment.create(
-          id: _uuid.v4(),
-          clientId: clientId,
-          festivalId: fid,
-          festivalDate: festival.date,
-          offsets: offsets,
-        ),
+      final assignment = Assignment.create(
+        id: _uuid.v4(),
+        clientId: clientId,
+        festivalId: fid,
+        festivalDate: festival.date,
+        offsets: offsets,
       );
+      _assignments.add(assignment);
+      newAssignments.add(assignment);
     }
 
     await _persistAssignments();
+    return newAssignments;
   }
 
   @override

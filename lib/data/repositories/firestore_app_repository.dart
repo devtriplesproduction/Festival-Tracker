@@ -412,7 +412,7 @@ class FirestoreAppRepository implements AppRepository {
   }
 
   @override
-  Future<void> syncClientAssignments({
+  Future<List<Assignment>> syncClientAssignments({
     required String clientId,
     required List<String> festivalIds,
     required Map<String, Festival> festivalsById,
@@ -426,6 +426,7 @@ class FirestoreAppRepository implements AppRepository {
         .toList();
 
     final batch = _db.batch();
+    final newAssignments = <Assignment>[];
 
     for (final a in existing) {
       if (!desired.contains(a.festivalId)) {
@@ -447,9 +448,11 @@ class FirestoreAppRepository implements AppRepository {
         offsets: offsets,
       );
       batch.set(_assignments.doc(id), _assignmentWrite(assignment));
+      newAssignments.add(assignment);
     }
 
     await batch.commit();
+    return newAssignments;
   }
 
   @override
