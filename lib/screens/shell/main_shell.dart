@@ -54,8 +54,9 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final uid = context.read<AuthState>().user?.id ?? '';
     final role = context.watch<AuthState>().role ?? UserRole.designer;
-    final unread = context.watch<AppState>().unreadNotificationsCount;
+    final unread = context.watch<AppState>().unreadNotificationsCount(uid);
     final tabs = _tabsFor(role, unread);
 
     // Keep index in range when role changes tab count.

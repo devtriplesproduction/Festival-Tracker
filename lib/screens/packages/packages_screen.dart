@@ -158,6 +158,33 @@ class _PackagesScreenState extends State<PackagesScreen> {
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
+                              if (index == packages.length) {
+                                if (state.hasMorePackages) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    child: Center(
+                                      child: state.loadingMorePackages
+                                          ? const CupertinoActivityIndicator()
+                                          : CupertinoButton(
+                                              onPressed: () => state.loadMorePackages(),
+                                              child: const Text('Load More'),
+                                            ),
+                                    ),
+                                  );
+                                } else if (packages.isNotEmpty) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    child: Center(
+                                      child: Text(
+                                        'No more packages',
+                                        style: AppFonts.helvetica(size: 13, color: AppColors.textTertiary),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              }
+
                               final pkg = packages[index];
                               final client = state.clientById(pkg.clientId);
                               final progress = state.progressFor(pkg);
@@ -243,7 +270,7 @@ class _PackagesScreenState extends State<PackagesScreen> {
                                 ),
                               );
                             },
-                            childCount: packages.length,
+                            childCount: packages.length + 1,
                           ),
                         ),
                       ),

@@ -39,7 +39,7 @@ class NotificationApiClient {
   final Dio _dio;
   
   // URL to the Node.js backend. In production, this would be an environment variable.
-  static const String _baseUrl = 'http://10.0.2.2:3000/api/notifications';
+  static const String _baseUrl = 'https://notification-server-asep.onrender.com/api/notifications';
 
   NotificationApiClient(this._logger) : _dio = Dio() {
     _dio.options.baseUrl = _baseUrl;

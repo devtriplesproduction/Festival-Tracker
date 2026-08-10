@@ -75,6 +75,33 @@ class ClientsScreen extends StatelessWidget {
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
+                              if (index == clients.length) {
+                                if (state.hasMoreClients) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    child: Center(
+                                      child: state.loadingMoreClients
+                                          ? const CupertinoActivityIndicator()
+                                          : CupertinoButton(
+                                              onPressed: () => state.loadMoreClients(),
+                                              child: const Text('Load More'),
+                                            ),
+                                    ),
+                                  );
+                                } else if (clients.isNotEmpty) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    child: Center(
+                                      child: Text(
+                                        'No more clients',
+                                        style: AppFonts.helvetica(size: 13, color: AppColors.textTertiary),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              }
+
                               final c = clients[index];
                               final year = DateTime.now().year;
                               final pkg = state.packageForClientYear(c.id, year);
@@ -164,7 +191,7 @@ class ClientsScreen extends StatelessWidget {
                                 ),
                               );
                             },
-                            childCount: clients.length,
+                            childCount: clients.length + 1,
                           ),
                         ),
                       ),

@@ -3,7 +3,17 @@ enum NotificationType {
   uploadReminder('upload_reminder'),
   sendReminder('send_reminder'),
   overdueAlert('overdue_alert'),
-  packageRenewal('package_renewal');
+  packageRenewal('package_renewal'),
+  newAssignment('NEW_ASSIGNMENT'),
+  qcRejected('QC_REJECTED'),
+  deadlineReminder('DEADLINE_REMINDER'),
+  overdueReminder('OVERDUE_REMINDER'),
+  qcUploaded('QC_UPLOADED'),
+  qcApproved('QC_APPROVED'),
+  readyToSend('READY_TO_SEND'),
+  posterSent('POSTER_SENT'),
+  uploadFailed('UPLOAD_FAILED'),
+  packageExpiry('PACKAGE_EXPIRY');
 
   const NotificationType(this.value);
   final String value;
@@ -25,6 +35,26 @@ enum NotificationType {
         return 'Overdue alert';
       case NotificationType.packageRenewal:
         return 'Package renewal';
+      case NotificationType.newAssignment:
+        return 'New assignment';
+      case NotificationType.qcRejected:
+        return 'QC rejected';
+      case NotificationType.deadlineReminder:
+        return 'Deadline approaching';
+      case NotificationType.overdueReminder:
+        return 'Overdue reminder';
+      case NotificationType.qcUploaded:
+        return 'QC uploaded';
+      case NotificationType.qcApproved:
+        return 'QC approved';
+      case NotificationType.readyToSend:
+        return 'Ready to send';
+      case NotificationType.posterSent:
+        return 'Poster sent';
+      case NotificationType.uploadFailed:
+        return 'Upload failed';
+      case NotificationType.packageExpiry:
+        return 'Package expiry';
     }
   }
 }
@@ -39,7 +69,7 @@ class NotificationLog {
     required this.message,
     required this.sentAt,
     required this.recipientRole,
-    this.read = false,
+    this.readBy = const [],
   });
 
   final String id;
@@ -52,7 +82,7 @@ class NotificationLog {
 
   /// Role string: admin | designer | manager | qc | all
   final String recipientRole;
-  final bool read;
+  final List<String> readBy;
 
   NotificationLog copyWith({
     String? id,
@@ -63,7 +93,7 @@ class NotificationLog {
     String? message,
     DateTime? sentAt,
     String? recipientRole,
-    bool? read,
+    List<String>? readBy,
   }) {
     return NotificationLog(
       id: id ?? this.id,
@@ -74,7 +104,7 @@ class NotificationLog {
       message: message ?? this.message,
       sentAt: sentAt ?? this.sentAt,
       recipientRole: recipientRole ?? this.recipientRole,
-      read: read ?? this.read,
+      readBy: readBy ?? this.readBy,
     );
   }
 
@@ -86,7 +116,7 @@ class NotificationLog {
         'message': message,
         'sentAt': sentAt.toUtc(),
         'recipientRole': recipientRole,
-        'read': read,
+        'readBy': readBy,
       };
 
   factory NotificationLog.fromMap(String id, Map<String, dynamic> map) {
@@ -99,7 +129,7 @@ class NotificationLog {
       message: map['message'] as String? ?? '',
       sentAt: _parseDate(map['sentAt']),
       recipientRole: map['recipientRole'] as String? ?? 'all',
-      read: map['read'] as bool? ?? false,
+      readBy: (map['readBy'] as List?)?.cast<String>() ?? (map['read'] == true ? ['legacy_read'] : []),
     );
   }
 

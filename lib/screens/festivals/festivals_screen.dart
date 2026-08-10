@@ -104,6 +104,33 @@ class FestivalsScreen extends StatelessWidget {
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
+                              if (index == festivals.length) {
+                                if (state.hasMoreFestivals) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    child: Center(
+                                      child: state.loadingMoreFestivals
+                                          ? const CupertinoActivityIndicator()
+                                          : CupertinoButton(
+                                              onPressed: () => state.loadMoreFestivals(),
+                                              child: const Text('Load More'),
+                                            ),
+                                    ),
+                                  );
+                                } else if (festivals.isNotEmpty) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    child: Center(
+                                      child: Text(
+                                        'No more festivals',
+                                        style: AppFonts.helvetica(size: 13, color: AppColors.textTertiary),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              }
+
                               final f = festivals[index];
                               final isPast = f.date.isBefore(
                                 DateTime(
@@ -235,7 +262,7 @@ class FestivalsScreen extends StatelessWidget {
                                 ),
                               );
                             },
-                            childCount: festivals.length,
+                            childCount: festivals.length + 1,
                           ),
                         ),
                       ),

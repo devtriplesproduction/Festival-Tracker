@@ -6,6 +6,7 @@ import '../../core/utils/responsive.dart';
 import '../../core/utils/date_formatters.dart';
 import '../../models/notification_log.dart';
 import '../../providers/app_state.dart';
+import '../../providers/auth_state.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/ui_kit.dart';
@@ -61,8 +62,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final list = state.notifications;
-    final unread = state.unreadNotificationsCount;
+    final uid = context.read<AuthState>().user?.id ?? '';
+    final list = state.notifications.where((n) => !n.readBy.contains(uid)).toList();
+    final unread = list.length;
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
@@ -151,13 +153,35 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
+                          if (index == list.length) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                              child: CupertinoButton(
+                                color: AppColors.surface,
+                                onPressed: state.loadingMoreNotifications
+                                    ? null
+                                    : () => state.loadMoreNotifications(),
+                                child: state.loadingMoreNotifications
+                                    ? const CupertinoActivityIndicator()
+                                    : Text(
+                                        'Load Older Alerts',
+                                        style: AppFonts.poppins(
+                                          size: 14,
+                                          weight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                              ),
+                            );
+                          }
                           final n = list[index];
                           return _AlertTile(
                             log: n,
-                            onTap: () => context.read<AppState>().markNotificationRead(n.id),
+                            uid: uid,
+                            onTap: () => context.read<AppState>().markNotificationRead(n.id, uid),
                           );
                         },
-                        childCount: list.length,
+                        childCount: list.length + (state.hasMoreNotifications ? 1 : 0),
                       ),
                     ),
                   ),
@@ -169,10 +193,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
 }
 
 class _AlertTile extends StatelessWidget {
-  const _AlertTile({required this.log, required this.onTap});
+  const _AlertTile({required this.log, required this.onTap, required this.uid});
 
   final NotificationLog log;
   final VoidCallback onTap;
+  final String uid;
 
   Color get _tint {
     switch (log.type) {
@@ -184,6 +209,8 @@ class _AlertTile extends StatelessWidget {
         return AppColors.overdue;
       case NotificationType.packageRenewal:
         return AppColors.teal;
+      default:
+        return AppColors.accent;
     }
   }
 
@@ -197,14 +224,17 @@ class _AlertTile extends StatelessWidget {
         return CupertinoIcons.exclamationmark_triangle_fill;
       case NotificationType.packageRenewal:
         return CupertinoIcons.arrow_2_circlepath;
+      default:
+        return CupertinoIcons.bell_fill;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isRead = log.readBy.contains(uid);
     return AppCard(
       margin: EdgeInsets.symmetric(horizontal: context.pagePadding, vertical: 5),
-      highlightColor: log.read ? null : _tint,
+      highlightColor: isRead ? null : _tint,
       onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +257,7 @@ class _AlertTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (!log.read)
+                    if (!isRead)
                       Container(
                         width: 8,
                         height: 8,

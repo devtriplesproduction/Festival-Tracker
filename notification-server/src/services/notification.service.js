@@ -55,6 +55,7 @@ class NotificationService {
             await axios.post(this.apiUrl, payload, { headers: this.headers });
         } catch (error) {
             console.error('OneSignal Push Failed:', error?.response?.data || error.message);
+            throw error;
         }
     }
 
@@ -75,6 +76,7 @@ class NotificationService {
             await this.sendPush(targetUids, title, body, data);
         } catch (error) {
             console.error(`Failed to send to role ${role}:`, error);
+            throw error;
         }
     }
 

@@ -6,36 +6,36 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   AppColors._();
 
-  static const Color background = Color(0xFFF3F5F9);
+  static const Color background = Color(0xFFFFFFFF);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceMuted = Color(0xFFF8F9FC);
+  static const Color surfaceMuted = Color(0xFFF9FAFB);
 
-  static const Color accent = Color(0xFF3B5BDB);
-  static const Color accentSoft = Color(0xFFE8EDFF);
-  static const Color accentDeep = Color(0xFF2B4ACB);
+  static const Color accent = Color(0xFFB10255);
+  static const Color accentSoft = Color(0xFFFFF0F5);
+  static const Color accentDeep = Color(0xFF800040);
 
-  static const Color textPrimary = Color(0xFF12141C);
-  static const Color textSecondary = Color(0xFF5C6478);
-  static const Color textTertiary = Color(0xFF98A0B3);
+  static const Color textPrimary = Color(0xFF000000);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textTertiary = Color(0xFF9CA3AF);
 
-  static const Color borderSubtle = Color(0xFFE6E9F0);
-  static const Color divider = Color(0xFFEBEEF5);
+  static const Color borderSubtle = Color(0xFFE5E7EB);
+  static const Color divider = Color(0xFFF3F4F6);
 
-  static const Color overdue = Color(0xFFE03131);
-  static const Color overdueSoft = Color(0xFFFFF0F0);
+  static const Color overdue = Color(0xFFDC2626);
+  static const Color overdueSoft = Color(0xFFFEF2F2);
   static const Color overdueBorder = Color(0xFFF5C2C2);
 
-  static const Color success = Color(0xFF0CA678);
-  static const Color successSoft = Color(0xFFE6FCF5);
+  static const Color success = Color(0xFF000000); // Black for high-contrast actions
+  static const Color successSoft = Color(0xFFF3F4F6); // Soft grey background
 
-  static const Color warning = Color(0xFFE67700);
-  static const Color warningSoft = Color(0xFFFFF4E6);
+  static const Color warning = Color(0xFF4B5563); // Dark grey for secondary actions
+  static const Color warningSoft = Color(0xFFF9FAFB);
 
-  static const Color purple = Color(0xFF7048E8);
-  static const Color purpleSoft = Color(0xFFF3F0FF);
+  static const Color purple = Color(0xFFB10255); // Match primary accent
+  static const Color purpleSoft = Color(0xFFFFF0F5);
 
-  static const Color teal = Color(0xFF0B9B8A);
-  static const Color tealSoft = Color(0xFFE3FCF9);
+  static const Color teal = Color(0xFF800040); // Deep plum
+  static const Color tealSoft = Color(0xFFFCE8F3);
 }
 
 class AppFonts {

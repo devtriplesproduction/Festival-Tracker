@@ -14,6 +14,13 @@ import '../../models/festival.dart';
 import '../../models/notification_log.dart';
 import '../../models/package_price_history.dart';
 
+class PaginatedResult<T> {
+  final List<T> items;
+  final Object? lastCursor;
+
+  const PaginatedResult({required this.items, this.lastCursor});
+}
+
 /// Abstract data layer so Firestore can replace local storage without UI rework.
 abstract class AppRepository {
   Stream<List<Festival>> watchFestivals();
@@ -22,6 +29,13 @@ abstract class AppRepository {
   Stream<List<NotificationLog>> watchNotifications();
   Stream<List<ClientPackage>> watchClientPackages();
   Stream<List<PackagePriceHistory>> watchPackagePriceHistory();
+
+  Future<PaginatedResult<Festival>> fetchFestivalsPage({int limit = 20, Object? startAfter});
+  Future<PaginatedResult<Client>> fetchClientsPage({int limit = 20, Object? startAfter});
+  Future<PaginatedResult<Assignment>> fetchAssignmentsPage({int limit = 20, Object? startAfter, String? search, String? statusFilter, String? festivalFilter});
+  Future<PaginatedResult<NotificationLog>> fetchNotificationsPage({int limit = 20, Object? startAfter});
+  Future<PaginatedResult<ClientPackage>> fetchClientPackagesPage({int limit = 20, Object? startAfter});
+  Future<PaginatedResult<PackagePriceHistory>> fetchPackagePriceHistoryPage({int limit = 20, Object? startAfter});
 
   Future<DeadlineOffsetConfig> loadDeadlineConfig();
   Future<void> saveDeadlineConfig(DeadlineOffsetConfig config);
@@ -42,7 +56,9 @@ abstract class AppRepository {
   });
 
   Future<void> upsertNotification(NotificationLog log);
-  Future<void> markNotificationRead(String id);
+  Future<void> markNotificationRead(String id, String userId);
+  Future<void> deleteNotification(String id);
+  Future<void> deleteOldNotifications(DateTime beforeDate);
   Future<void> clearNotifications();
 
   Future<void> upsertClientPackage(ClientPackage package);
@@ -237,7 +253,7 @@ class LocalAppRepository implements AppRepository {
         'message': n.message,
         'sentAt': _encodeDate(n.sentAt),
         'recipientRole': n.recipientRole,
-        'read': n.read,
+        'readBy': n.readBy,
       };
     }).toList());
     await _prefs.setString(_kNotifications, encoded);
@@ -332,6 +348,57 @@ class LocalAppRepository implements AppRepository {
   Stream<List<NotificationLog>> watchNotifications() async* {
     yield List.unmodifiable(_notifications);
     yield* _notificationsCtrl.stream;
+  }
+
+  @override
+  Future<PaginatedResult<Festival>> fetchFestivalsPage({int limit = 20, Object? startAfter}) async {
+    final startIndex = startAfter == null ? 0 : (startAfter as int);
+    final endIndex = (startIndex + limit).clamp(0, _festivals.length);
+    final items = _festivals.sublist(startIndex, endIndex);
+    return PaginatedResult(items: items, lastCursor: endIndex < _festivals.length ? endIndex : null);
+  }
+
+  @override
+  Future<PaginatedResult<Client>> fetchClientsPage({int limit = 20, Object? startAfter}) async {
+    final startIndex = startAfter == null ? 0 : (startAfter as int);
+    final endIndex = (startIndex + limit).clamp(0, _clients.length);
+    final items = _clients.sublist(startIndex, endIndex);
+    return PaginatedResult(items: items, lastCursor: endIndex < _clients.length ? endIndex : null);
+  }
+
+  @override
+  Future<PaginatedResult<Assignment>> fetchAssignmentsPage({int limit = 20, Object? startAfter, String? search, String? statusFilter, String? festivalFilter}) async {
+    // Local filtering
+    var filtered = _assignments;
+    // Real implementation would filter here based on args
+    final startIndex = startAfter == null ? 0 : (startAfter as int);
+    final endIndex = (startIndex + limit).clamp(0, filtered.length);
+    final items = filtered.sublist(startIndex, endIndex);
+    return PaginatedResult(items: items, lastCursor: endIndex < filtered.length ? endIndex : null);
+  }
+
+  @override
+  Future<PaginatedResult<ClientPackage>> fetchClientPackagesPage({int limit = 20, Object? startAfter}) async {
+    final startIndex = startAfter == null ? 0 : (startAfter as int);
+    final endIndex = (startIndex + limit).clamp(0, _packages.length);
+    final items = _packages.sublist(startIndex, endIndex);
+    return PaginatedResult(items: items, lastCursor: endIndex < _packages.length ? endIndex : null);
+  }
+
+  @override
+  Future<PaginatedResult<NotificationLog>> fetchNotificationsPage({int limit = 20, Object? startAfter}) async {
+    final startIndex = startAfter == null ? 0 : (startAfter as int);
+    final endIndex = (startIndex + limit).clamp(0, _notifications.length);
+    final items = _notifications.sublist(startIndex, endIndex);
+    return PaginatedResult(items: items, lastCursor: endIndex < _notifications.length ? endIndex : null);
+  }
+
+  @override
+  Future<PaginatedResult<PackagePriceHistory>> fetchPackagePriceHistoryPage({int limit = 20, Object? startAfter}) async {
+    final startIndex = startAfter == null ? 0 : (startAfter as int);
+    final endIndex = (startIndex + limit).clamp(0, _priceHistory.length);
+    final items = _priceHistory.sublist(startIndex, endIndex);
+    return PaginatedResult(items: items, lastCursor: endIndex < _priceHistory.length ? endIndex : null);
   }
 
   @override
@@ -475,10 +542,25 @@ class LocalAppRepository implements AppRepository {
   }
 
   @override
-  Future<void> markNotificationRead(String id) async {
+  Future<void> markNotificationRead(String id, String userId) async {
     final i = _notifications.indexWhere((n) => n.id == id);
     if (i < 0) return;
-    _notifications[i] = _notifications[i].copyWith(read: true);
+    if (!_notifications[i].readBy.contains(userId)) {
+      final newReadBy = List<String>.from(_notifications[i].readBy)..add(userId);
+      _notifications[i] = _notifications[i].copyWith(readBy: newReadBy);
+    }
+    await _persistNotifications();
+  }
+
+  @override
+  Future<void> deleteNotification(String id) async {
+    _notifications.removeWhere((n) => n.id == id);
+    await _persistNotifications();
+  }
+
+  @override
+  Future<void> deleteOldNotifications(DateTime beforeDate) async {
+    _notifications.removeWhere((n) => n.sentAt.isBefore(beforeDate));
     await _persistNotifications();
   }
 

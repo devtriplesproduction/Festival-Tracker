@@ -106,6 +106,73 @@ class FirestoreAppRepository implements AppRepository {
         );
   }
 
+  @override
+  Future<PaginatedResult<Festival>> fetchFestivalsPage({int limit = 20, Object? startAfter}) async {
+    var query = _festivals.orderBy('date').limit(limit);
+    if (startAfter != null) query = query.startAfterDocument(startAfter as DocumentSnapshot);
+    final snap = await query.get();
+    final items = snap.docs.map((d) => Festival.fromMap(d.id, _normalize(d.data()))).toList();
+    return PaginatedResult(items: items, lastCursor: snap.docs.isNotEmpty ? snap.docs.last : null);
+  }
+
+  @override
+  Future<PaginatedResult<Client>> fetchClientsPage({int limit = 20, Object? startAfter}) async {
+    var query = _clients.orderBy('name').limit(limit);
+    if (startAfter != null) query = query.startAfterDocument(startAfter as DocumentSnapshot);
+    final snap = await query.get();
+    final items = snap.docs.map((d) => Client.fromMap(d.id, _normalize(d.data()))).toList();
+    return PaginatedResult(items: items, lastCursor: snap.docs.isNotEmpty ? snap.docs.last : null);
+  }
+
+  @override
+  Future<PaginatedResult<Assignment>> fetchAssignmentsPage({int limit = 20, Object? startAfter, String? search, String? statusFilter, String? festivalFilter}) async {
+    // Note: complex search and filtering requires compound indexes in Firestore. 
+    // We will do basic filtering if possible, or fetch and filter in memory if not.
+    var query = _assignments.limit(limit);
+    
+    // Status filter
+    if (statusFilter != null && statusFilter != 'all' && !statusFilter.startsWith('month')) {
+      query = query.where('status', isEqualTo: statusFilter);
+    }
+    
+    // Festival filter
+    if (festivalFilter != null && festivalFilter != 'all') {
+      query = query.where('festivalId', isEqualTo: _festivals.doc(festivalFilter));
+    }
+    
+    if (startAfter != null) query = query.startAfterDocument(startAfter as DocumentSnapshot);
+    final snap = await query.get();
+    final items = snap.docs.map((d) => Assignment.fromMap(d.id, _normalize(d.data()))).toList();
+    return PaginatedResult(items: items, lastCursor: snap.docs.isNotEmpty ? snap.docs.last : null);
+  }
+
+  @override
+  Future<PaginatedResult<ClientPackage>> fetchClientPackagesPage({int limit = 20, Object? startAfter}) async {
+    var query = _packages.orderBy('year', descending: true).limit(limit);
+    if (startAfter != null) query = query.startAfterDocument(startAfter as DocumentSnapshot);
+    final snap = await query.get();
+    final items = snap.docs.map((d) => ClientPackage.fromMap(d.id, _normalize(d.data()))).toList();
+    return PaginatedResult(items: items, lastCursor: snap.docs.isNotEmpty ? snap.docs.last : null);
+  }
+
+  @override
+  Future<PaginatedResult<NotificationLog>> fetchNotificationsPage({int limit = 20, Object? startAfter}) async {
+    var query = _notifications.orderBy('sentAt', descending: true).limit(limit);
+    if (startAfter != null) query = query.startAfterDocument(startAfter as DocumentSnapshot);
+    final snap = await query.get();
+    final items = snap.docs.map((d) => NotificationLog.fromMap(d.id, _normalize(d.data()))).toList();
+    return PaginatedResult(items: items, lastCursor: snap.docs.isNotEmpty ? snap.docs.last : null);
+  }
+
+  @override
+  Future<PaginatedResult<PackagePriceHistory>> fetchPackagePriceHistoryPage({int limit = 20, Object? startAfter}) async {
+    var query = _priceHistory.orderBy('changedAt', descending: true).limit(limit);
+    if (startAfter != null) query = query.startAfterDocument(startAfter as DocumentSnapshot);
+    final snap = await query.get();
+    final items = snap.docs.map((d) => PackagePriceHistory.fromMap(d.id, _normalize(d.data()))).toList();
+    return PaginatedResult(items: items, lastCursor: snap.docs.isNotEmpty ? snap.docs.last : null);
+  }
+
   Map<String, dynamic> _normalize(Map<String, dynamic> data) {
     final out = Map<String, dynamic>.from(data);
     for (final key in out.keys.toList()) {
@@ -168,7 +235,7 @@ class FirestoreAppRepository implements AppRepository {
         'message': n.message,
         'sentAt': Timestamp.fromDate(n.sentAt),
         'recipientRole': n.recipientRole,
-        'read': n.read,
+        'readBy': n.readBy,
       };
 
   @override
@@ -277,18 +344,44 @@ class FirestoreAppRepository implements AppRepository {
   }
 
   @override
-  Future<void> markNotificationRead(String id) async {
-    await _notifications.doc(id).update({'read': true});
+  Future<void> markNotificationRead(String id, String userId) async {
+    await _notifications.doc(id).update({
+      'readBy': FieldValue.arrayUnion([userId])
+    });
+  }
+
+  @override
+  Future<void> deleteNotification(String id) async {
+    await _notifications.doc(id).delete();
+  }
+
+  @override
+  Future<void> deleteOldNotifications(DateTime beforeDate) async {
+    while (true) {
+      final snap = await _notifications
+          .where('sentAt', isLessThan: Timestamp.fromDate(beforeDate))
+          .limit(500)
+          .get();
+      if (snap.docs.isEmpty) break;
+      final batch = _db.batch();
+      for (final doc in snap.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    }
   }
 
   @override
   Future<void> clearNotifications() async {
-    final snap = await _notifications.limit(200).get();
-    final batch = _db.batch();
-    for (final d in snap.docs) {
-      batch.delete(d.reference);
+    while (true) {
+      final snap = await _notifications.limit(500).get();
+      if (snap.docs.isEmpty) break;
+      final batch = _db.batch();
+      for (final d in snap.docs) {
+        batch.delete(d.reference);
+      }
+      await batch.commit();
     }
-    await batch.commit();
   }
 
   @override

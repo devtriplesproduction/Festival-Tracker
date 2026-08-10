@@ -39,6 +39,26 @@ class AppState extends ChangeNotifier {
   String? error;
   bool usingLocalStore = true;
 
+  bool hasMoreAssignments = true;
+  bool loadingMoreAssignments = false;
+  Object? _assignCursor;
+
+  bool hasMorePackages = true;
+  bool loadingMorePackages = false;
+  Object? _packageCursor;
+
+  bool hasMoreNotifications = true;
+  bool loadingMoreNotifications = false;
+  Object? _notifCursor;
+
+  bool hasMoreClients = true;
+  bool loadingMoreClients = false;
+  Object? _clientCursor;
+
+  bool hasMoreFestivals = true;
+  bool loadingMoreFestivals = false;
+  Object? _festivalCursor;
+
   StreamSubscription<List<Festival>>? _festSub;
   StreamSubscription<List<Client>>? _clientSub;
   StreamSubscription<List<Assignment>>? _assignSub;
@@ -97,6 +117,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
+
   Festival? festivalById(String id) {
     try {
       return festivals.firstWhere((f) => f.id == id);
@@ -149,8 +170,8 @@ class AppState extends ChangeNotifier {
 
   int get overdueCount => activeAssignments.where((a) => a.isOverdue()).length;
 
-  int get unreadNotificationsCount =>
-      notifications.where((n) => !n.read).length;
+  int unreadNotificationsCount(String userId) =>
+      notifications.where((n) => !n.readBy.contains(userId)).length;
 
   /// Job belongs to [month] if its festival date falls in that calendar month.
   bool isCurrentMonthJob(Assignment a, {DateTime? now}) {
@@ -425,12 +446,17 @@ class AppState extends ChangeNotifier {
 
     // Dispatch real-time pushes for status changes
     if (status == AssignmentStatus.ready) {
-       _dispatchPush(NotificationEventType.qcApproved, targetRole: 'manager', data: {
-         'clientName': 'Client', // Would need lookup, but using general terms for now or fetching real data
-         'festivalName': 'Festival', 
-         'assignmentId': assignment.id,
-         'route': '/pipeline'
-       });
+       await _dispatchPush(
+         NotificationEventType.qcApproved, 
+         targetRole: 'manager', 
+         data: {
+           'clientName': 'Client', // Or fetch actual data if available
+           'festivalName': 'Festival', 
+           'assignmentId': assignment.id,
+           'route': '/pipeline'
+         },
+         message: 'QC Approved for ${assignment.id}',
+       );
     }
   }
 
@@ -474,81 +500,47 @@ class AppState extends ChangeNotifier {
   Future<int> runDailyCheck() async {
     final now = DateTime.now();
     var created = 0;
+    
     for (final a in activeAssignments) {
       final client = clientById(a.clientId);
       final festival = festivalById(a.festivalId);
       if (client == null || festival == null) continue;
       if (a.status == AssignmentStatus.sent) continue;
 
-      if (!a.hasPoster) {
-        await _repo.upsertNotification(
-          NotificationLog(
-            id: _uuid.v4(),
-            assignmentId: a.id,
-            clientName: client.name,
-            festivalName: festival.name,
-            type: NotificationType.uploadReminder,
-            message:
-                'Upload poster for ${client.name} — ${festival.name} is approaching!',
-            sentAt: now,
-            recipientRole: 'designer',
-          ),
-        );
-        _dispatchPush(NotificationEventType.deadlineReminder, targetRole: 'designer', data: {
-          'clientName': client.name,
-          'festivalName': festival.name,
-          'assignmentId': a.id,
-          'route': '/pipeline'
-        });
-        created++;
-      } else if (a.status != AssignmentStatus.sent) {
-        await _repo.upsertNotification(
-          NotificationLog(
-            id: _uuid.v4(),
-            assignmentId: a.id,
-            clientName: client.name,
-            festivalName: festival.name,
-            type: NotificationType.sendReminder,
-            message:
-                'Send ${client.name}\'s poster via WhatsApp — event: ${festival.name}',
-            sentAt: now,
-            recipientRole: 'manager',
-          ),
-        );
-        _dispatchPush(NotificationEventType.readyToSend, targetRole: 'manager', data: {
-          'clientName': client.name,
-          'festivalName': festival.name,
-          'assignmentId': a.id,
-          'route': '/pipeline'
-        });
-        created++;
-      }
+      String action = !a.hasPoster ? 'upload' : 'send';
 
       if (a.isOverdue(now)) {
-        await _repo.upsertNotification(
-          NotificationLog(
-            id: _uuid.v4(),
-            assignmentId: a.id,
-            clientName: client.name,
-            festivalName: festival.name,
-            type: NotificationType.overdueAlert,
-            message:
-                '${client.name} · ${festival.name} is ${a.daysLate(now)} day(s) past deadline',
-            sentAt: now,
-            recipientRole: 'all',
-          ),
-        );
-        _dispatchPush(NotificationEventType.overdueReminder, targetRole: 'admin', data: { // Notify admins about overdue
+        await _dispatchPush(NotificationEventType.overdueReminder, targetRole: 'admin', data: {
           'clientName': client.name,
           'festivalName': festival.name,
           'assignmentId': a.id,
           'route': '/pipeline'
-        });
+        }, message: '${client.name} · ${festival.name} is ${a.daysLate(now)} day(s) past deadline (${action == 'upload' ? 'Missing Poster' : 'Pending Send'})', occurrenceDate: now);
+        created++;
+      } else if (action == 'upload') {
+        await _dispatchPush(NotificationEventType.deadlineReminder, targetRole: 'designer', data: {
+          'clientName': client.name,
+          'festivalName': festival.name,
+          'assignmentId': a.id,
+          'route': '/pipeline'
+        }, message: 'Upload poster for ${client.name} — ${festival.name} is approaching!', occurrenceDate: now);
+        created++;
+      } else if (action == 'send') {
+        await _dispatchPush(NotificationEventType.readyToSend, targetRole: 'manager', data: {
+          'clientName': client.name,
+          'festivalName': festival.name,
+          'assignmentId': a.id,
+          'route': '/pipeline'
+        }, message: 'Send ${client.name}\'s poster via WhatsApp — event: ${festival.name}', occurrenceDate: now);
         created++;
       }
     }
 
     created += await _runPackageRenewalChecks(now);
+    
+    // Auto-cleanup old notifications
+    await _repo.deleteOldNotifications(now.subtract(const Duration(days: 30)));
+    
     return created;
   }
 
@@ -599,19 +591,17 @@ class AppState extends ChangeNotifier {
         final priceLabel = current.price > 0
             ? ' · ${current.currency == 'INR' ? '₹' : ''}${current.price.toStringAsFixed(0)}'
             : '';
-        await _repo.upsertNotification(
-          NotificationLog(
-            id: _uuid.v4(),
-            assignmentId: current.id,
-            clientName: client.name,
-            festivalName: 'Package renewal',
-            type: NotificationType.packageRenewal,
-            message: days == 0
-                ? '${client.name}: package renews today$priceLabel. Mark payment received, then renew — or stop.'
-                : '${client.name}: package renews in $days day(s)$priceLabel. Collect payment to renew, or stop if unpaid.',
-            sentAt: now,
-            recipientRole: 'manager',
-          ),
+        await _dispatchPush(
+          NotificationEventType.packageExpiry,
+          targetRole: 'manager',
+          data: {
+            'clientName': client.name,
+            'festivalName': 'Package renewal',
+            'assignmentId': current.id,
+          },
+          message: days == 0
+              ? '${client.name}: package renews today$priceLabel. Mark payment received, then renew — or stop.'
+              : '${client.name}: package renews in $days day(s)$priceLabel. Collect payment to renew, or stop if unpaid.',
         );
         final marked = current.copyWith(
           renewalNotifiedAt: now,
@@ -738,21 +728,138 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> markNotificationRead(String id) async {
-    await _repo.markNotificationRead(id);
+  Future<void> markNotificationRead(String id, String userId) async {
+    await _repo.markNotificationRead(id, userId);
+    final i = notifications.indexWhere((n) => n.id == id);
+    if (i >= 0 && !notifications[i].readBy.contains(userId)) {
+      final newReadBy = List<String>.from(notifications[i].readBy)..add(userId);
+      notifications[i] = notifications[i].copyWith(readBy: newReadBy);
+      notifyListeners();
+    }
   }
 
   Future<void> clearNotifications() async {
     await _repo.clearNotifications();
+    notifications.clear();
+    _notifCursor = null;
+    hasMoreNotifications = false;
+    notifyListeners();
   }
 
-  void _dispatchPush(NotificationEventType type, {String? targetUid, String? targetRole, Map<String, dynamic>? data}) {
+  String _buildNotificationId({
+    required String assignmentId,
+    required NotificationType type,
+    DateTime? occurrenceDate,
+  }) {
+    if (occurrenceDate != null) {
+      final dateStr = '${occurrenceDate.year}-${occurrenceDate.month.toString().padLeft(2, '0')}-${occurrenceDate.day.toString().padLeft(2, '0')}';
+      return '${assignmentId}_${type.value}_$dateStr';
+    }
+    return '${assignmentId}_${type.value}';
+  }
+
+  Future<void> _dispatchPush(NotificationEventType type, {String? targetUid, String? targetRole, Map<String, dynamic>? data, String? message, DateTime? occurrenceDate}) async {
+    final assignmentId = data?['assignmentId'] as String?;
+    
+    if (message != null && assignmentId != null) {
+      final nid = _buildNotificationId(
+        assignmentId: assignmentId,
+        type: NotificationType.fromValue(type.value),
+        occurrenceDate: occurrenceDate,
+      );
+      
+      if (notifications.any((n) => n.id == nid)) {
+        return; // Deduplicated: already processed this event
+      }
+
+      final log = NotificationLog(
+        id: nid,
+        assignmentId: assignmentId,
+        clientName: data?['clientName'] as String? ?? 'Client',
+        festivalName: data?['festivalName'] as String? ?? 'Festival',
+        type: NotificationType.fromValue(type.value),
+        message: message,
+        sentAt: DateTime.now(),
+        recipientRole: targetRole ?? 'all',
+      );
+      
+      try {
+        await _repo.upsertNotification(log);
+      } catch (e) {
+        debugPrint('Failed to save notification: $e');
+        return; // Do not send push if in-app log fails
+      }
+      
+      notifications = [log, ...notifications];
+      notifyListeners();
+    }
+
     notificationApiClient?.sendEvent(
       eventType: type,
       targetUid: targetUid,
       targetRole: targetRole,
       data: data,
     );
+  }
+
+  Future<void> loadMoreAssignments() async {
+    if (!hasMoreAssignments || loadingMoreAssignments) return;
+    loadingMoreAssignments = true;
+    notifyListeners();
+    final res = await _repo.fetchAssignmentsPage(limit: 20, startAfter: _assignCursor);
+    assignments = [...assignments, ...res.items];
+    _assignCursor = res.lastCursor;
+    hasMoreAssignments = res.lastCursor != null;
+    loadingMoreAssignments = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMorePackages() async {
+    if (!hasMorePackages || loadingMorePackages) return;
+    loadingMorePackages = true;
+    notifyListeners();
+    final res = await _repo.fetchClientPackagesPage(limit: 20, startAfter: _packageCursor);
+    clientPackages = [...clientPackages, ...res.items];
+    _packageCursor = res.lastCursor;
+    hasMorePackages = res.lastCursor != null;
+    loadingMorePackages = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMoreNotifications() async {
+    if (!hasMoreNotifications || loadingMoreNotifications) return;
+    loadingMoreNotifications = true;
+    notifyListeners();
+    final res = await _repo.fetchNotificationsPage(limit: 20, startAfter: _notifCursor);
+    notifications = [...notifications, ...res.items];
+    _notifCursor = res.lastCursor;
+    hasMoreNotifications = res.lastCursor != null;
+    loadingMoreNotifications = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMoreClients() async {
+    if (!hasMoreClients || loadingMoreClients) return;
+    loadingMoreClients = true;
+    notifyListeners();
+    final res = await _repo.fetchClientsPage(limit: 20, startAfter: _clientCursor);
+    clients = [...clients, ...res.items];
+    _clientCursor = res.lastCursor;
+    hasMoreClients = res.lastCursor != null;
+    loadingMoreClients = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMoreFestivals() async {
+    if (!hasMoreFestivals || loadingMoreFestivals) return;
+    loadingMoreFestivals = true;
+    notifyListeners();
+    final res = await _repo.fetchFestivalsPage(limit: 20, startAfter: _festivalCursor);
+    festivals = [...festivals, ...res.items];
+    _festivalCursor = res.lastCursor;
+    hasMoreFestivals = res.lastCursor != null;
+    loadingMoreFestivals = false;
+    notifyListeners();
   }
 
   // ── Year packages ────────────────────────────────────────────────────────

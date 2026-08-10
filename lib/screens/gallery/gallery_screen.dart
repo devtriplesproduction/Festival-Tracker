@@ -170,7 +170,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       title: 'No festivals',
                       message: 'Select a year with festivals to view designs.',
                     )
-                  : galleryItems.isEmpty
+                  : (galleryItems.isEmpty && !state.hasMoreAssignments)
                       ? const EmptyState(
                           icon: CupertinoIcons.photo_on_rectangle,
                           title: 'No designs yet',
@@ -189,8 +189,40 @@ class _GalleryScreenState extends State<GalleryScreen> {
                             mainAxisSpacing: 12,
                             childAspectRatio: 0.8,
                           ),
-                          itemCount: galleryItems.length,
+                          itemCount: galleryItems.length + 1,
                           itemBuilder: (context, index) {
+                            if (index == galleryItems.length) {
+                              if (state.hasMoreAssignments) {
+                                return GestureDetector(
+                                  onTap: () => state.loadMoreAssignments(),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surface,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: AppColors.borderSubtle),
+                                    ),
+                                    child: Center(
+                                      child: state.loadingMoreAssignments
+                                          ? const CupertinoActivityIndicator()
+                                          : Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(CupertinoIcons.arrow_down, color: AppColors.accent),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  'Load More',
+                                                  style: AppFonts.poppins(size: 13, weight: FontWeight.w600, color: AppColors.accent),
+                                                ),
+                                              ],
+                                            ),
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                return const SizedBox.shrink();
+                              }
+                            }
+
                             final assignment = galleryItems[index];
                             final client = state.clientById(assignment.clientId);
                             return _GalleryItemCard(

@@ -1,6 +1,7 @@
 services:
   - type: web
     name: notification-server
+    plan: free
     env: node
     rootDir: notification-server
     buildCommand: npm install

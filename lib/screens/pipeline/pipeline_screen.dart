@@ -253,6 +253,33 @@ class _PipelineScreenState extends State<PipelineScreen> {
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
+                            if (index == rows.length) {
+                              if (state.hasMoreAssignments) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  child: Center(
+                                    child: state.loadingMoreAssignments
+                                        ? const CupertinoActivityIndicator()
+                                        : CupertinoButton(
+                                            onPressed: () => state.loadMoreAssignments(),
+                                            child: const Text('Load More'),
+                                          ),
+                                  ),
+                                );
+                              } else if (rows.isNotEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  child: Center(
+                                    child: Text(
+                                      'No more jobs',
+                                      style: AppFonts.helvetica(size: 13, color: AppColors.textTertiary),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }
+
                             final a = rows[index];
                             return AssignmentCard(
                               assignment: a,
@@ -286,7 +313,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
                                   : null,
                             );
                           },
-                          childCount: rows.length,
+                          childCount: rows.length + 1,
                         ),
                       ),
                     ),
