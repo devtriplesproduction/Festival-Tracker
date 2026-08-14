@@ -70,77 +70,33 @@ class _PipelineScreenState extends State<PipelineScreen> {
                   ),
                   if (stats.monthOverdue > 0)
                     SliverToBoxAdapter(
-                      child: OverdueBanner(
-                        count: stats.monthOverdue,
-                        onTap: () =>
-                            setState(() => _statusFilter = 'month_overdue'),
-                      ),
-                    ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: context.pageInsetsOnly(top: 4, bottom: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(
-                              left: context.pagePadding,
-                              bottom: 8,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: context.pagePadding, vertical: 8),
+                        child: GestureDetector(
+                          onTap: () => setState(() => _statusFilter = 'month_overdue'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.overdue.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.overdue.withValues(alpha: 0.3)),
                             ),
-                            child: Text(
-                              'This month',
-                              style: AppFonts.poppins(
-                                size: 12,
-                                weight: FontWeight.w700,
-                                color: AppColors.textSecondary,
-                              ),
+                            child: Row(
+                              children: [
+                                const Icon(CupertinoIcons.exclamationmark_circle_fill, size: 16, color: AppColors.overdue),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${stats.monthOverdue} Overdue',
+                                  style: AppFonts.poppins(size: 13, weight: FontWeight.w600, color: AppColors.overdue),
+                                ),
+                                const Spacer(),
+                                const Icon(CupertinoIcons.chevron_right, size: 14, color: AppColors.overdue),
+                              ],
                             ),
                           ),
-                          MetricStrip(
-                            children: [
-                              MetricTile(
-                                label: 'Posters',
-                                value: '${stats.monthPosters}',
-                                color: AppColors.accent,
-                                icon: CupertinoIcons.photo_fill,
-                                selected: _statusFilter == 'month',
-                                onTap: () => setState(() {
-                                  _statusFilter =
-                                      _statusFilter == 'month' ? 'all' : 'month';
-                                }),
-                              ),
-                              MetricTile(
-                                label: 'Overdue',
-                                value: '${stats.monthOverdue}',
-                                color: AppColors.overdue,
-                                icon: CupertinoIcons.exclamationmark_circle_fill,
-                                selected: _statusFilter == 'month_overdue',
-                                onTap: () => setState(() {
-                                  _statusFilter =
-                                      _statusFilter == 'month_overdue'
-                                          ? 'all'
-                                          : 'month_overdue';
-                                }),
-                              ),
-                              MetricTile(
-                                label: 'Sent',
-                                value: '${stats.monthSent}',
-                                color: AppColors.success,
-                                icon: CupertinoIcons.checkmark_circle_fill,
-                                selected: _statusFilter == 'month_sent',
-                                onTap: () => setState(() {
-                                  _statusFilter =
-                                      _statusFilter == 'month_sent'
-                                          ? 'all'
-                                          : 'month_sent';
-                                }),
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: context.pageInsets,

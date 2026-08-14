@@ -32,14 +32,14 @@ cron.schedule('0 8 * * *', async () => {
             const diffTime = festivalDate.getTime() - today.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            // Notify from 3 days before until the day of the festival
-            if (diffDays <= 3 && diffDays >= 0) {
+            // Notify from 7 days before until the day of the festival
+            if (diffDays <= 7 && diffDays >= 0) {
                 upcomingFestivals.push({ docId: doc.id, festival, diffDays });
             }
         });
 
         if (upcomingFestivals.length === 0) {
-            console.log('No upcoming festivals in 3, 1, or 0 days.');
+            console.log('No upcoming festivals in the next 7 days.');
             return;
         }
 

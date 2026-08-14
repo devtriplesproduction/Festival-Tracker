@@ -501,7 +501,7 @@ class AppState extends ChangeNotifier {
     if (status == AssignmentStatus.qc && oldStatus == AssignmentStatus.design) {
        await _dispatchPush(
          NotificationEventType.qcUploaded, 
-         targetRole: 'manager', 
+         targetRole: 'all', 
          data: {
            'clientName': cName,
            'festivalName': fName, 
@@ -513,7 +513,7 @@ class AppState extends ChangeNotifier {
     } else if (status == AssignmentStatus.design && oldStatus == AssignmentStatus.qc) {
        await _dispatchPush(
          NotificationEventType.qcRejected, 
-         targetRole: 'designer', 
+         targetRole: 'all', 
          data: {
            'clientName': cName,
            'festivalName': fName, 
@@ -525,7 +525,7 @@ class AppState extends ChangeNotifier {
     } else if (status == AssignmentStatus.ready && oldStatus != AssignmentStatus.ready) {
        await _dispatchPush(
          NotificationEventType.qcApproved, 
-         targetRole: 'manager', 
+         targetRole: 'all', 
          data: {
            'clientName': cName,
            'festivalName': fName, 
@@ -537,7 +537,7 @@ class AppState extends ChangeNotifier {
     } else if (status == AssignmentStatus.sent && oldStatus != AssignmentStatus.sent) {
        await _dispatchPush(
          NotificationEventType.posterSent, 
-         targetRole: 'admin', 
+         targetRole: 'all', 
          data: {
            'clientName': cName,
            'festivalName': fName, 

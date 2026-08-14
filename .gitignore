@@ -49,3 +49,4 @@ functions/.env
 functions/.env.local
 **/.env
 lib/core/secrets/service_account.dart
+serviceAccountKey.json

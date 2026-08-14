@@ -64,6 +64,18 @@ class NotificationService {
      */
     async sendToRole(role, title, body, data) {
         try {
+            if (role === 'all') {
+                const payload = {
+                    app_id: this.appId,
+                    included_segments: ['Subscribed Users'],
+                    headings: { en: title },
+                    contents: { en: body },
+                    data: data
+                };
+                await axios.post(this.apiUrl, payload, { headers: this.headers });
+                return;
+            }
+
             const db = getFirestore();
             const snapshot = await db.collection('users').where('role', '==', role).get();
             const targetUids = [];

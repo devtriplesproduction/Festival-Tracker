@@ -128,54 +128,6 @@ class _MainShellState extends State<MainShell> {
       );
     }
 
-    if (role.canViewClients) {
-      list.add(
-        _TabSpec(
-          item: const BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.person_2),
-            activeIcon: Icon(CupertinoIcons.person_2_fill),
-            label: 'Clients',
-          ),
-          railIcon: CupertinoIcons.person_2,
-          railSelectedIcon: CupertinoIcons.person_2_fill,
-          label: 'Clients',
-          builder: (_) => const ClientsScreen(),
-        ),
-      );
-    }
-
-    if (role.canViewPackages) {
-      list.add(
-        _TabSpec(
-          item: const BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.cube_box),
-            activeIcon: Icon(CupertinoIcons.cube_box_fill),
-            label: 'Packages',
-          ),
-          railIcon: CupertinoIcons.cube_box,
-          railSelectedIcon: CupertinoIcons.cube_box_fill,
-          label: 'Packages',
-          builder: (_) => const PackagesScreen(),
-        ),
-      );
-    }
-
-    if (role.canManageTeam) {
-      list.add(
-        _TabSpec(
-          item: const BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.photo_on_rectangle),
-            activeIcon: Icon(CupertinoIcons.photo_fill_on_rectangle_fill),
-            label: 'Gallery',
-          ),
-          railIcon: CupertinoIcons.photo_on_rectangle,
-          railSelectedIcon: CupertinoIcons.photo_fill_on_rectangle_fill,
-          label: 'Gallery',
-          builder: (_) => const GalleryScreen(),
-        ),
-      );
-    }
-
     list.add(
       _TabSpec(
         item: BottomNavigationBarItem(
@@ -206,22 +158,6 @@ class _MainShellState extends State<MainShell> {
         builder: (_) => const AlertsScreen(),
       ),
     );
-
-    if (role.canManageTeam) {
-      list.add(
-        _TabSpec(
-          item: const BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.person_3),
-            activeIcon: Icon(CupertinoIcons.person_3_fill),
-            label: 'Team',
-          ),
-          railIcon: CupertinoIcons.person_3,
-          railSelectedIcon: CupertinoIcons.person_3_fill,
-          label: 'Team',
-          builder: (_) => const TeamScreen(),
-        ),
-      );
-    }
 
     list.add(
       _TabSpec(
@@ -456,6 +392,52 @@ class AccountScreen extends StatelessWidget {
                         color: AppColors.success,
                       ),
                     ),
+                  
+                  if (role.canViewClients)
+                    _SettingsTile(
+                      icon: CupertinoIcons.person_2,
+                      title: 'Clients',
+                      subtitle: 'Manage client accounts',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(builder: (_) => const ClientsScreen()),
+                        );
+                      },
+                    ),
+                  if (role.canViewPackages)
+                    _SettingsTile(
+                      icon: CupertinoIcons.cube_box,
+                      title: 'Packages',
+                      subtitle: 'Manage client packages',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(builder: (_) => const PackagesScreen()),
+                        );
+                      },
+                    ),
+                  if (role.canManageTeam) ...[
+                    _SettingsTile(
+                      icon: CupertinoIcons.photo_on_rectangle,
+                      title: 'Gallery',
+                      subtitle: 'View all completed posters',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(builder: (_) => const GalleryScreen()),
+                        );
+                      },
+                    ),
+                    _SettingsTile(
+                      icon: CupertinoIcons.person_3,
+                      title: 'Team',
+                      subtitle: 'Manage team members',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(builder: (_) => const TeamScreen()),
+                        );
+                      },
+                    ),
+                  ],
+
                   if (role.canManageSettings)
                     _SettingsTile(
                       icon: CupertinoIcons.slider_horizontal_3,
