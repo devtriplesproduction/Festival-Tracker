@@ -30,6 +30,13 @@ class OneSignalService {
           _handleDeepLink(data);
         }
       });
+
+      // Force foreground notifications to display
+      OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+        // By default, OneSignal v5 may suppress foreground notifications.
+        // Calling display() forces it to show.
+        event.notification.display();
+      });
     } catch (e, st) {
       _logger.error('Failed to initialize OneSignal', e, st);
     }

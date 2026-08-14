@@ -510,7 +510,7 @@ class AppState extends ChangeNotifier {
          },
          message: 'Poster uploaded for $cName ($fName). Pending QC.',
        );
-    } else if (status == AssignmentStatus.design && oldStatus == AssignmentStatus.qc) {
+    } else if (status == AssignmentStatus.design && oldStatus.stepIndex > AssignmentStatus.design.stepIndex) {
        await _dispatchPush(
          NotificationEventType.qcRejected, 
          targetRole: 'all', 
