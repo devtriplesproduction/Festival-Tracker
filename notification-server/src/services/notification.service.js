@@ -67,7 +67,7 @@ class NotificationService {
             if (role === 'all') {
                 const payload = {
                     app_id: this.appId,
-                    included_segments: ['Subscribed Users'],
+                    included_segments: ['Total Subscriptions'],
                     headings: { en: title },
                     contents: { en: body },
                     data: data
