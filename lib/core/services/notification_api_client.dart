@@ -39,7 +39,7 @@ class NotificationApiClient {
   final Dio _dio;
   
   // URL to the Node.js backend. In production, this would be an environment variable.
-  static const String _baseUrl = 'https://notification-server-asep.onrender.com/api/notifications';
+  static const String _baseUrl = 'https://notification-server-asep.onrender.com/api/notifications/';
 
   NotificationApiClient(this._logger) : _dio = Dio() {
     _dio.options.baseUrl = _baseUrl;
@@ -83,21 +83,25 @@ class NotificationApiClient {
     String? targetRole,
     Map<String, dynamic>? data,
   ) async {
+    print('DEBUG: _sendInternal called with eventType: $eventType, targetRole: $targetRole');
     try {
-      final response = await _dio.post('/send', data: {
+      final response = await _dio.post('send', data: {
         'eventType': eventType.value,
         if (targetUid != null) 'targetUid': targetUid,
         if (targetRole != null) 'targetRole': targetRole,
         if (data != null) 'data': data,
       });
 
+      print('DEBUG: _sendInternal response status: ${response.statusCode}');
       if (response.statusCode == 200) {
         _logger.info('Push notification dispatched successfully.');
       } else {
         _logger.warning('Push notification backend returned: ${response.statusCode}');
       }
     } catch (e) {
+      print('DEBUG: _sendInternal caught exception: $e');
       _logger.warning('Failed to reach notification backend: $e');
+    }
       rethrow; // Caught by outer catchError
     }
   }
