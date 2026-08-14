@@ -101,7 +101,6 @@ class NotificationApiClient {
     } catch (e) {
       print('DEBUG: _sendInternal caught exception: $e');
       _logger.warning('Failed to reach notification backend: $e');
-    }
       rethrow; // Caught by outer catchError
     }
   }
