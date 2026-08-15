@@ -13,7 +13,8 @@ enum NotificationType {
   readyToSend('READY_TO_SEND'),
   posterSent('POSTER_SENT'),
   uploadFailed('UPLOAD_FAILED'),
-  packageExpiry('PACKAGE_EXPIRY');
+  packageExpiry('PACKAGE_EXPIRY'),
+  upcomingFestival('UPCOMING_FESTIVAL');
 
   const NotificationType(this.value);
   final String value;
@@ -55,6 +56,8 @@ enum NotificationType {
         return 'Upload failed';
       case NotificationType.packageExpiry:
         return 'Package expiry';
+      case NotificationType.upcomingFestival:
+        return 'Upcoming festival';
     }
   }
 }

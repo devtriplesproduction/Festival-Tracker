@@ -55,16 +55,16 @@ cron.schedule('0 8 * * *', async () => {
                 route: '/festivals' // Assuming a route exists, or it just opens the app
             };
 
-            // Trigger notification process (targets 'admin')
-            await NotificationService.processEvent('UPCOMING_FESTIVAL', null, 'admin', data);
+            // Trigger notification process (targets 'all')
+            await NotificationService.processEvent('UPCOMING_FESTIVAL', null, 'all', data);
 
             // Create the history record manually to preserve existing behavior.
             await db.collection('notifications').add({
                 festivalName: data.festivalName,
-                type: 'upcomingFestival',
+                type: 'UPCOMING_FESTIVAL',
                 message: `${data.festivalName} is coming up ${dayText}!`,
                 sentAt: FieldValue.serverTimestamp(),
-                recipientRole: 'admin',
+                recipientRole: 'all',
                 read: false
             });
         }

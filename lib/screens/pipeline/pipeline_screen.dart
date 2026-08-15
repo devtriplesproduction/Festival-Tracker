@@ -26,6 +26,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
   final _searchCtrl = TextEditingController();
   String _statusFilter = 'all';
   String _festivalFilter = 'all';
+  int _pageLimit = 20;
 
   @override
   void dispose() {
@@ -37,11 +38,13 @@ class _PipelineScreenState extends State<PipelineScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final role = context.watch<AuthState>().role ?? UserRole.designer;
-    final rows = state.filteredPipeline(
+    final allRows = state.filteredPipeline(
       search: _searchCtrl.text,
       statusFilter: _statusFilter,
       festivalFilter: _festivalFilter,
     );
+    final rows = allRows.take(_pageLimit).toList();
+    final hasMore = allRows.length > _pageLimit;
     final canAssign = role.canCreateAssignments;
     final stats = state.stats;
 
@@ -55,7 +58,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
                 slivers: [
                   SliverToBoxAdapter(
                     child: PageHeader(
-                      title: 'Pipeline',
+                      title: 'Festival Tracker',
                       subtitle: canAssign
                           ? 'Jobs by deadline · Assign work or filter below'
                           : 'Your jobs · nearest deadline first',
@@ -68,35 +71,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
                           : null,
                     ),
                   ),
-                  if (stats.monthOverdue > 0)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: context.pagePadding, vertical: 8),
-                        child: GestureDetector(
-                          onTap: () => setState(() => _statusFilter = 'month_overdue'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: AppColors.overdue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.overdue.withValues(alpha: 0.3)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(CupertinoIcons.exclamationmark_circle_fill, size: 16, color: AppColors.overdue),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '${stats.monthOverdue} Overdue',
-                                  style: AppFonts.poppins(size: 13, weight: FontWeight.w600, color: AppColors.overdue),
-                                ),
-                                const Spacer(),
-                                const Icon(CupertinoIcons.chevron_right, size: 14, color: AppColors.overdue),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: context.pageInsets,
@@ -210,16 +185,18 @@ class _PipelineScreenState extends State<PipelineScreen> {
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
                             if (index == rows.length) {
-                              if (state.hasMoreAssignments) {
+                              if (hasMore) {
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 20),
                                   child: Center(
-                                    child: state.loadingMoreAssignments
-                                        ? const CupertinoActivityIndicator()
-                                        : CupertinoButton(
-                                            onPressed: () => state.loadMoreAssignments(),
-                                            child: const Text('Load More'),
-                                          ),
+                                    child: CupertinoButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _pageLimit += 20;
+                                        });
+                                      },
+                                      child: const Text('Load More'),
+                                    ),
                                   ),
                                 );
                               } else if (rows.isNotEmpty) {
