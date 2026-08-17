@@ -74,8 +74,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
       backgroundColor: AppColors.background,
       child: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
+        child: ResponsiveContent(
+          child: Column(
+            children: [
             PageHeader(
               title: 'Design Gallery',
               subtitle: 'View all uploaded designs by year and festival',
@@ -235,8 +236,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _GalleryItemCard extends StatelessWidget {

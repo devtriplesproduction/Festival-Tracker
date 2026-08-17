@@ -56,7 +56,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final uid = context.read<AuthState>().user?.id ?? '';
     final role = context.watch<AuthState>().role ?? UserRole.designer;
-    final unread = context.watch<AppState>().unreadNotificationsCount(uid);
+    final unread = context.watch<AppState>().unreadNotificationsCount(uid, role);
     final tabs = _tabsFor(role, unread);
 
     // Keep index in range when role changes tab count.
@@ -292,236 +292,221 @@ class AccountScreen extends StatelessWidget {
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
       child: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(p, 8, p, 40),
-          children: [
-            const PageHeader(
-              title: 'Account',
-              subtitle: 'Profile, settings, and sign out',
-            ),
-            SizedBox(height: context.sectionGap * 0.5),
-            // Counteract PageHeader horizontal padding so card aligns with list padding.
-            Transform.translate(
-              offset: Offset(-p, 0),
-              child: Padding(
+        child: ResponsiveContent(
+          maxWidth: 760,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(0, 8, 0, context.listBottomPadding),
+            children: [
+              const PageHeader(
+                title: 'Account',
+                subtitle: 'Profile, settings, and sign out',
+              ),
+              SizedBox(height: context.sectionGap * 0.5),
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: p),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                  Container(
-                    padding: EdgeInsets.all(context.isCompact ? 18 : 22),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: AppShadows.card,
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: context.isCompact ? 64 : 72,
-                          height: context.isCompact ? 64 : 72,
-                          decoration: BoxDecoration(
-                            color: const Color(0x33FFFFFF),
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(color: const Color(0x55FFFFFF)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(context.isCompact ? 18 : 24),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: AppShadows.card,
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: context.isCompact ? 64 : 76,
+                            height: context.isCompact ? 64 : 76,
+                            decoration: BoxDecoration(
+                              color: const Color(0x33FFFFFF),
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(color: const Color(0x55FFFFFF)),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              (user?.displayName.isNotEmpty == true)
+                                  ? user!.displayName[0].toUpperCase()
+                                  : '?',
+                              style: AppFonts.montserrat(
+                                size: 30,
+                                weight: FontWeight.w800,
+                                color: const Color(0xFFFFFFFF),
+                              ),
+                            ),
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            (user?.displayName.isNotEmpty == true)
-                                ? user!.displayName[0].toUpperCase()
-                                : '?',
+                          const SizedBox(height: 14),
+                          Text(
+                            user?.displayName ?? '',
+                            textAlign: TextAlign.center,
                             style: AppFonts.montserrat(
-                              size: 30,
+                              size: 20,
                               weight: FontWeight.w800,
                               color: const Color(0xFFFFFFFF),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          user?.displayName ?? '',
-                          textAlign: TextAlign.center,
-                          style: AppFonts.montserrat(
-                            size: 20,
-                            weight: FontWeight.w800,
-                            color: const Color(0xFFFFFFFF),
+                          const SizedBox(height: 4),
+                          Text(
+                            '@${user?.username ?? ''} · ${user?.role.label ?? ''}',
+                            textAlign: TextAlign.center,
+                            style: AppFonts.poppins(
+                              size: 13,
+                              color: const Color(0xCCFFFFFF),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '@${user?.username ?? ''} · ${user?.role.label ?? ''}',
-                          textAlign: TextAlign.center,
-                          style: AppFonts.poppins(
-                            size: 13,
-                            color: const Color(0xCCFFFFFF),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      _miniStat('${stats.total}', 'Jobs', color: const Color(0xFF2196F3)),
-                      _miniStat('${stats.overdueCount}', 'Overdue', color: AppColors.overdue),
-                      _miniStat('${stats.readyToSend}', 'Ready', color: const Color(0xFF4CAF50)),
-                      _miniStat('${stats.sent}', 'Sent', color: const Color(0xFF9C27B0)),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.divider, width: 0.6),
+                      ),
+                      child: Row(
+                        children: [
+                          _miniStat('${stats.total}', 'Jobs', color: const Color(0xFF2196F3)),
+                          _miniStat('${stats.overdueCount}', 'Overdue', color: AppColors.overdue),
+                          _miniStat('${stats.readyToSend}', 'Ready', color: const Color(0xFF4CAF50)),
+                          _miniStat('${stats.sent}', 'Sent', color: const Color(0xFF9C27B0)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (role.canViewClients)
+                      _SettingsTile(
+                        icon: CupertinoIcons.person_2,
+                        title: 'Clients',
+                        subtitle: 'Manage client accounts',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(builder: (_) => const ClientsScreen()),
+                          );
+                        },
+                      ),
+                    if (role.canViewPackages)
+                      _SettingsTile(
+                        icon: CupertinoIcons.cube_box,
+                        title: 'Packages',
+                        subtitle: 'Manage client packages',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(builder: (_) => const PackagesScreen()),
+                          );
+                        },
+                      ),
+                    if (role.canManageTeam) ...[
+                      _SettingsTile(
+                        icon: CupertinoIcons.photo_on_rectangle,
+                        title: 'Gallery',
+                        subtitle: 'View all completed posters',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(builder: (_) => const GalleryScreen()),
+                          );
+                        },
+                      ),
+                      _SettingsTile(
+                        icon: CupertinoIcons.person_3,
+                        title: 'Team',
+                        subtitle: 'Manage team members',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(builder: (_) => const TeamScreen()),
+                          );
+                        },
+                      ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (app.usingLocalStore)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: InfoBanner(
-                        icon: CupertinoIcons.device_phone_portrait,
-                        message: 'Local mode — data is stored on this device only.',
-                        color: AppColors.warning,
+
+                    if (role.canManageSettings)
+                      _SettingsTile(
+                        icon: CupertinoIcons.slider_horizontal_3,
+                        title: 'Deadline settings',
+                        subtitle: 'Days before event for Design / QC / Ready',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(builder: (_) => const DeadlineSettingsScreen()),
+                          );
+                        },
                       ),
-                    )
-                  else
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: InfoBanner(
-                        icon: CupertinoIcons.cloud_fill,
-                        message: 'Cloud mode — data syncs via Firestore.',
-                        color: AppColors.success,
-                      ),
-                    ),
-                  
-                  if (role.canViewClients)
+
+                    const SizedBox(height: 10),
                     _SettingsTile(
-                      icon: CupertinoIcons.person_2,
-                      title: 'Clients',
-                      subtitle: 'Manage client accounts',
+                      icon: CupertinoIcons.lock_rotation,
+                      title: 'Update password',
+                      subtitle: 'Change your account password',
                       onTap: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(builder: (_) => const ClientsScreen()),
-                        );
-                      },
-                    ),
-                  if (role.canViewPackages)
-                    _SettingsTile(
-                      icon: CupertinoIcons.cube_box,
-                      title: 'Packages',
-                      subtitle: 'Manage client packages',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(builder: (_) => const PackagesScreen()),
-                        );
-                      },
-                    ),
-                  if (role.canManageTeam) ...[
-                    _SettingsTile(
-                      icon: CupertinoIcons.photo_on_rectangle,
-                      title: 'Gallery',
-                      subtitle: 'View all completed posters',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(builder: (_) => const GalleryScreen()),
-                        );
+                        if (user != null) {
+                          _updatePassword(context, user);
+                        }
                       },
                     ),
                     _SettingsTile(
-                      icon: CupertinoIcons.person_3,
-                      title: 'Team',
-                      subtitle: 'Manage team members',
+                      icon: CupertinoIcons.info_circle,
+                      title: 'How it works',
+                      subtitle: 'Festival date → auto deadlines → poster URL → WhatsApp',
                       onTap: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(builder: (_) => const TeamScreen()),
+                        showCupertinoDialog<void>(
+                          context: context,
+                          builder: (ctx) => CupertinoAlertDialog(
+                            title: const Text('How it works'),
+                            content: const Text(
+                              '1. Add festivals & clients\n'
+                              '2. Assign client × festival (Pipeline)\n'
+                              '3. Designer pastes Drive poster URL\n'
+                              '4. QC approves · Manager sends WhatsApp\n'
+                              '5. Check Alerts for overdue jobs',
+                            ),
+                            actions: [
+                              CupertinoDialogAction(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Got it'),
+                              ),
+                            ],
+                          ),
                         );
+                      },
+                    ),
+                    const SizedBox(height: 28),
+                    PrimaryButton(
+                      label: 'Log out',
+                      icon: CupertinoIcons.square_arrow_right,
+                      color: AppColors.accent,
+                      onPressed: () async {
+                        final ok = await showCupertinoDialog<bool>(
+                          context: context,
+                          builder: (ctx) => CupertinoAlertDialog(
+                            title: const Text('Log out?'),
+                            content: const Text('You will need your username and password again.'),
+                            actions: [
+                              CupertinoDialogAction(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel'),
+                              ),
+                              CupertinoDialogAction(
+                                isDestructiveAction: true,
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Log out'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (ok == true && context.mounted) {
+                          try {
+                            await context.read<OneSignalService>().logout();
+                          } catch (_) {}
+                          await context.read<AuthState>().logout();
+                        }
                       },
                     ),
                   ],
-
-                  if (role.canManageSettings)
-                    _SettingsTile(
-                      icon: CupertinoIcons.slider_horizontal_3,
-                      title: 'Deadline settings',
-                      subtitle: 'Days before event for Design / QC / Ready',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(builder: (_) => const DeadlineSettingsScreen()),
-                        );
-                      },
-                    ),
-
-                  const SizedBox(height: 10),
-                  _SettingsTile(
-                    icon: CupertinoIcons.lock_rotation,
-                    title: 'Update password',
-                    subtitle: 'Change your account password',
-                    onTap: () {
-                      if (user != null) {
-                        _updatePassword(context, user);
-                      }
-                    },
-                  ),
-                  _SettingsTile(
-                    icon: CupertinoIcons.info_circle,
-                    title: 'How it works',
-                    subtitle: 'Festival date → auto deadlines → poster URL → WhatsApp',
-                    onTap: () {
-                      showCupertinoDialog<void>(
-                        context: context,
-                        builder: (ctx) => CupertinoAlertDialog(
-                          title: const Text('How it works'),
-                          content: const Text(
-                            '1. Add festivals & clients\n'
-                            '2. Assign client × festival (Pipeline)\n'
-                            '3. Designer pastes Drive poster URL\n'
-                            '4. QC approves · Manager sends WhatsApp\n'
-                            '5. Check Alerts for overdue jobs',
-                          ),
-                          actions: [
-                            CupertinoDialogAction(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('Got it'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 28),
-                  PrimaryButton(
-                    label: 'Log out',
-                    icon: CupertinoIcons.square_arrow_right,
-                    color: AppColors.overdue,
-                    onPressed: () async {
-                      final ok = await showCupertinoDialog<bool>(
-                        context: context,
-                        builder: (ctx) => CupertinoAlertDialog(
-                          title: const Text('Log out?'),
-                          content: const Text('You will need your username and password again.'),
-                          actions: [
-                            CupertinoDialogAction(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancel'),
-                            ),
-                            CupertinoDialogAction(
-                              isDestructiveAction: true,
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Log out'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (ok == true && context.mounted) {
-                        try {
-                          await context.read<OneSignalService>().logout();
-                        } catch (_) {}
-                        await context.read<AuthState>().logout();
-                      }
-                    },
-                  ),
-                    ],
-                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -9,12 +9,12 @@ class PageHeader extends StatelessWidget {
   const PageHeader({
     super.key,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     this.trailing,
   });
 
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final Widget? trailing;
 
   @override
@@ -34,15 +34,17 @@ class PageHeader extends StatelessWidget {
             letterSpacing: -0.6,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: AppFonts.poppins(
-            size: narrow ? 12 : 13,
-            color: AppColors.textSecondary,
-            height: 1.35,
+        if (subtitle != null && subtitle!.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            subtitle!,
+            style: AppFonts.poppins(
+              size: narrow ? 12 : 13,
+              color: AppColors.textSecondary,
+              height: 1.35,
+            ),
           ),
-        ),
+        ],
       ],
     );
 
@@ -221,6 +223,51 @@ class AppTextField extends StatelessWidget {
   }
 }
 
+/// Clean, high-contrast search text field with clear border and background.
+class AppSearchField extends StatelessWidget {
+  const AppSearchField({
+    super.key,
+    required this.controller,
+    this.placeholder = 'Search client or festival',
+    this.onChanged,
+    this.onSubmitted,
+    this.onClear,
+  });
+
+  final TextEditingController controller;
+  final String placeholder;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoSearchTextField(
+      controller: controller,
+      placeholder: placeholder,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      onSuffixTap: onClear,
+      style: AppFonts.poppins(size: 14, weight: FontWeight.w500, color: AppColors.textPrimary),
+      placeholderStyle: AppFonts.poppins(size: 14, color: AppColors.textSecondary),
+      itemColor: AppColors.textSecondary,
+      itemSize: 20,
+      prefixInsets: const EdgeInsetsDirectional.fromSTEB(14, 0, 8, 0),
+      suffixInsets: const EdgeInsetsDirectional.fromSTEB(0, 0, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFFD1D5DB),
+          width: 1.2,
+        ),
+        boxShadow: AppShadows.soft,
+      ),
+    );
+  }
+}
+
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     super.key,
@@ -243,19 +290,23 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = color ?? AppColors.accent;
     final child = loading
-        ? const CupertinoActivityIndicator(color: Colors.white)
+        ? const SizedBox(
+            height: 20,
+            width: 20,
+            child: CupertinoActivityIndicator(color: Colors.white, radius: 9),
+          )
         : Row(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 18, color: Colors.white),
+                Icon(icon, size: 16, color: Colors.white),
                 const SizedBox(width: 8),
               ],
               Text(
                 label,
                 style: AppFonts.poppins(
-                  size: 15,
+                  size: 14,
                   weight: FontWeight.w700,
                   color: Colors.white,
                 ),
@@ -268,8 +319,10 @@ class PrimaryButton extends StatelessWidget {
       onPressed: loading ? null : onPressed,
       pressedOpacity: 0.75,
       child: Container(
+        height: 44,
         width: expanded ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -279,17 +332,17 @@ class PrimaryButton extends StatelessWidget {
               Color.lerp(bg, Colors.black, 0.15) ?? bg,
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: bg.withValues(alpha: 0.35),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+              color: bg.withValues(alpha: 0.28),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
             const BoxShadow(
-              color: Color(0x1A000000),
-              blurRadius: 4,
-              offset: Offset(0, 2),
+              color: Color(0x14000000),
+              blurRadius: 3,
+              offset: Offset(0, 1),
             ),
           ],
         ),
@@ -325,8 +378,10 @@ class SecondaryButton extends StatelessWidget {
       onPressed: onPressed,
       pressedOpacity: 0.6,
       child: Container(
+        height: 44,
         width: expanded ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: c.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
@@ -345,7 +400,7 @@ class SecondaryButton extends StatelessWidget {
             ],
             Text(
               label,
-              style: AppFonts.poppins(size: 13, weight: FontWeight.w700, color: c),
+              style: AppFonts.poppins(size: 14, weight: FontWeight.w700, color: c),
             ),
           ],
         ),

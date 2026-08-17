@@ -97,7 +97,8 @@ class AppState extends ChangeNotifier {
       });
 
       _notifSub = _repo.watchNotifications().listen((list) {
-        notifications = list;
+        final seen = <String>{};
+        notifications = list.where((n) => seen.add(n.id)).toList();
         notifyListeners();
       });
 
@@ -109,6 +110,17 @@ class AppState extends ChangeNotifier {
       _priceHistorySub = _repo.watchPackagePriceHistory().listen((list) {
         packagePriceHistory = list;
         notifyListeners();
+      });
+
+      // Auto-cleanup alerts older than 1 month (30 days) from database
+      _repo.deleteOldNotifications(DateTime.now().subtract(const Duration(days: 30))).catchError((e) {
+        debugPrint('Auto-cleanup of old notifications error: $e');
+      });
+
+      // Run automatic checks on startup for deadline, overdue & renewal alerts
+      runDailyCheck().catchError((e) {
+        debugPrint('Daily check error on startup: $e');
+        return 0;
       });
     } catch (e) {
       error = e.toString();
@@ -170,8 +182,13 @@ class AppState extends ChangeNotifier {
 
   int get overdueCount => activeAssignments.where((a) => a.isOverdue()).length;
 
-  int unreadNotificationsCount(String userId) =>
-      notifications.where((n) => !n.readBy.contains(userId)).length;
+  int unreadNotificationsCount(String userId, [UserRole? role]) =>
+      notifications.where((n) {
+        if (n.readBy.contains(userId)) return false;
+        if (role == null || role == UserRole.admin) return true;
+        if (n.recipientRole == 'all') return true;
+        return n.recipientRole.toLowerCase() == role.value.toLowerCase();
+      }).length;
 
   /// Job belongs to [month] if its festival date falls in that calendar month.
   bool isCurrentMonthJob(Assignment a, {DateTime? now}) {
@@ -879,7 +896,8 @@ class AppState extends ChangeNotifier {
         return; // Do not send push if in-app log fails
       }
       
-      notifications = [log, ...notifications];
+      final withoutOld = notifications.where((n) => n.id != nid).toList();
+      notifications = [log, ...withoutOld];
       notifyListeners();
     }
 

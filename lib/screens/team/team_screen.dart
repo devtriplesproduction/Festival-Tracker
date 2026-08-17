@@ -22,71 +22,63 @@ class TeamScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       child: SafeArea(
         bottom: false,
-        child: users.isEmpty
-            ? Column(
-                children: [
-                  PageHeader(
-                    title: 'Team',
-                    subtitle: 'Designer · Manager · QC accounts',
-                    trailing: NavBarActionButton(
-                      label: 'Add',
-                      icon: CupertinoIcons.add,
-                      onPressed: () => _openCreate(context),
-                    ),
-                  ),
-                  Expanded(
-                    child: EmptyState(
-                      icon: CupertinoIcons.person_3,
-                      title: 'No team members',
-                      message: 'Create accounts for your team. They sign in with username & password.',
-                      actionLabel: 'Add user',
-                      onAction: () => _openCreate(context),
-                    ),
-                  ),
-                ],
-              )
-            : CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: PageHeader(
+        child: ResponsiveContent(
+          child: users.isEmpty
+              ? Column(
+                  children: [
+                    PageHeader(
                       title: 'Team',
-                      subtitle: '${users.length} account${users.length == 1 ? '' : 's'} · Admin only',
+                      subtitle: 'Designer · Manager · QC accounts',
                       trailing: NavBarActionButton(
                         label: 'Add',
                         icon: CupertinoIcons.add,
                         onPressed: () => _openCreate(context),
                       ),
                     ),
-                  ),
-                  SliverToBoxAdapter(
-                        child: Padding(
-                          padding: context.pageInsetsOnly(bottom: 10),
-                      child: InfoBanner(
-                        message:
-                            'No Google login. Share username + temporary password, then reset if needed.',
-                        icon: CupertinoIcons.lock_shield,
+                    Expanded(
+                      child: EmptyState(
+                        icon: CupertinoIcons.person_3,
+                        title: 'No team members',
+                        message: 'Create accounts for your team. They sign in with username & password.',
+                        actionLabel: 'Add user',
+                        onAction: () => _openCreate(context),
                       ),
                     ),
-                  ),
-                  SliverPadding(
-                    padding: EdgeInsets.only(bottom: context.listBottomPadding),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final u = users[index];
-                          return _UserTile(
-                            user: u,
-                            isSelf: u.id == auth.user?.id,
-                            onResetPassword: () => _resetPassword(context, u),
-                            onToggleActive: () => _toggleActive(context, u),
-                          );
-                        },
-                        childCount: users.length,
+                  ],
+                )
+              : CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: PageHeader(
+                        title: 'Team',
+                        subtitle: '${users.length} account${users.length == 1 ? '' : 's'} · Admin only',
+                        trailing: NavBarActionButton(
+                          label: 'Add',
+                          icon: CupertinoIcons.add,
+                          onPressed: () => _openCreate(context),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                    SliverPadding(
+                      padding: EdgeInsets.only(bottom: context.listBottomPadding),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final u = users[index];
+                            return _UserTile(
+                              user: u,
+                              isSelf: u.id == auth.user?.id,
+                              onResetPassword: () => _resetPassword(context, u),
+                              onToggleActive: () => _toggleActive(context, u),
+                            );
+                          },
+                          childCount: users.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }

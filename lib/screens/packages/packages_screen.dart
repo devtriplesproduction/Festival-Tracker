@@ -83,47 +83,15 @@ class _PackagesScreenState extends State<PackagesScreen> {
       backgroundColor: AppColors.background,
       child: SafeArea(
         bottom: false,
-        child: state.loading
-            ? const Center(child: CupertinoActivityIndicator())
-            : packages.isEmpty
-                ? Column(
-                    children: [
-                      PageHeader(
-                        title: 'Packages',
-                        subtitle: '$_year · 1-year festival poster packages',
-                        trailing: canManage
-                            ? NavBarActionButton(
-                                label: 'Create',
-                                icon: CupertinoIcons.add,
-                                onPressed: _openCreateAll,
-                              )
-                            : null,
-                      ),
-                      _YearFilter(
-                        year: _year,
-                        onChanged: (y) => setState(() => _year = y),
-                      ),
-                      Expanded(
-                        child: EmptyState(
-                          icon: CupertinoIcons.cube_box,
-                          title: 'No packages for $_year',
-                          message: canManage
-                              ? 'Create a 1-year package for all clients with one price.'
-                              : 'Admin has not created packages for this year yet.',
-                          actionLabel:
-                              canManage ? 'Create for all clients' : null,
-                          onAction: canManage ? _openCreateAll : null,
-                        ),
-                      ),
-                    ],
-                  )
-                : CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: PageHeader(
+        child: ResponsiveContent(
+          child: state.loading
+              ? const Center(child: CupertinoActivityIndicator())
+              : packages.isEmpty
+                  ? Column(
+                      children: [
+                        PageHeader(
                           title: 'Packages',
-                          subtitle:
-                              '${packages.length} client${packages.length == 1 ? '' : 's'} · $_year',
+                          subtitle: '$_year · 1-year festival poster packages',
                           trailing: canManage
                               ? NavBarActionButton(
                                   label: 'Create',
@@ -132,150 +100,177 @@ class _PackagesScreenState extends State<PackagesScreen> {
                                 )
                               : null,
                         ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: _YearFilter(
+                        _YearFilter(
                           year: _year,
                           onChanged: (y) => setState(() => _year = y),
                         ),
-                      ),
-                      if (canManage)
-                        const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(16, 0, 16, 10),
-                            child: InfoBanner(
-                              message:
-                                  'Create applies one price to every client. '
-                                  'Poster delivery auto-ticks when a job is marked Sent.',
-                              icon: CupertinoIcons.checkmark_seal,
+                        Expanded(
+                          child: EmptyState(
+                            icon: CupertinoIcons.cube_box,
+                            title: 'No packages for $_year',
+                            message: canManage
+                                ? 'Create a 1-year package for all clients with one price.'
+                                : 'Admin has not created packages for this year yet.',
+                            actionLabel:
+                                canManage ? 'Create for all clients' : null,
+                            onAction: canManage ? _openCreateAll : null,
+                          ),
+                        ),
+                      ],
+                    )
+                  : CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: PageHeader(
+                            title: 'Packages',
+                            subtitle:
+                                '${packages.length} client${packages.length == 1 ? '' : 's'} · $_year',
+                            trailing: canManage
+                                ? NavBarActionButton(
+                                    label: 'Create',
+                                    icon: CupertinoIcons.add,
+                                    onPressed: _openCreateAll,
+                                  )
+                                : null,
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: _YearFilter(
+                            year: _year,
+                            onChanged: (y) => setState(() => _year = y),
+                          ),
+                        ),
+                        SliverPadding(
+                          padding: EdgeInsets.only(
+                            bottom: context.listBottomPadding,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                if (index == packages.length) {
+                                  if (state.hasMorePackages) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 20),
+                                      child: Center(
+                                        child: state.loadingMorePackages
+                                            ? const CupertinoActivityIndicator()
+                                            : CupertinoButton(
+                                                onPressed: () =>
+                                                    state.loadMorePackages(),
+                                                child: const Text('Load More'),
+                                              ),
+                                      ),
+                                    );
+                                  } else if (packages.isNotEmpty) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 20),
+                                      child: Center(
+                                        child: Text(
+                                          'No more packages',
+                                          style: AppFonts.helvetica(
+                                              size: 13,
+                                              color: AppColors.textTertiary),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                }
+
+                                final pkg = packages[index];
+                                final client = state.clientById(pkg.clientId);
+                                final progress = state.progressFor(pkg);
+                                final days = pkg.daysUntilRenewal();
+                                return AppCard(
+                                  margin: EdgeInsets.symmetric(
+                                    horizontal: context.pagePadding,
+                                    vertical: 5,
+                                  ),
+                                  onTap: () => Navigator.of(context).push(
+                                    CupertinoPageRoute(
+                                      builder: (_) => PackageDetailScreen(
+                                        packageId: pkg.id,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      LetterAvatar(
+                                        label: client?.name ?? '?',
+                                        color: pkg.isStopped
+                                            ? AppColors.textTertiary
+                                            : AppColors.purple,
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              client?.name ?? 'Unknown client',
+                                              style: AppFonts.montserrat(
+                                                size: 16,
+                                                weight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              formatInr(pkg.price),
+                                              style: AppFonts.poppins(
+                                                size: 14,
+                                                weight: FontWeight.w600,
+                                                color: AppColors.accent,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              pkg.isStopped
+                                                  ? 'Stopped'
+                                                  : progress.isEmpty
+                                                      ? (days != null
+                                                          ? 'Renews in $days day(s)'
+                                                          : 'Active package')
+                                                      : '${progress.label} posters · ${pkg.paymentStatus.label}',
+                                              style: AppFonts.helvetica(
+                                                size: 12,
+                                                color: pkg.isStopped
+                                                    ? AppColors.overdue
+                                                    : (pkg.isRenewalDueSoon()
+                                                        ? AppColors.warning
+                                                        : AppColors.textSecondary),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      _ProgressChip(
+                                        label: pkg.isStopped
+                                            ? 'Stop'
+                                            : (progress.isEmpty
+                                                ? pkg.paymentStatus.label
+                                                : progress.label),
+                                        complete: pkg.isPaid && !pkg.isStopped,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        CupertinoIcons.chevron_right,
+                                        size: 16,
+                                        color: AppColors.textTertiary,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              childCount: packages.length + 1,
                             ),
                           ),
                         ),
-                      SliverPadding(
-                        padding: EdgeInsets.only(
-                          bottom: context.listBottomPadding,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              if (index == packages.length) {
-                                if (state.hasMorePackages) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 20),
-                                    child: Center(
-                                      child: state.loadingMorePackages
-                                          ? const CupertinoActivityIndicator()
-                                          : CupertinoButton(
-                                              onPressed: () => state.loadMorePackages(),
-                                              child: const Text('Load More'),
-                                            ),
-                                    ),
-                                  );
-                                } else if (packages.isNotEmpty) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 20),
-                                    child: Center(
-                                      child: Text(
-                                        'No more packages',
-                                        style: AppFonts.helvetica(size: 13, color: AppColors.textTertiary),
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return const SizedBox.shrink();
-                              }
-
-                              final pkg = packages[index];
-                              final client = state.clientById(pkg.clientId);
-                              final progress = state.progressFor(pkg);
-                              final days = pkg.daysUntilRenewal();
-                              return AppCard(
-                                margin: EdgeInsets.symmetric(
-                                  horizontal: context.pagePadding,
-                                  vertical: 5,
-                                ),
-                                onTap: () => Navigator.of(context).push(
-                                  CupertinoPageRoute(
-                                    builder: (_) => PackageDetailScreen(
-                                      packageId: pkg.id,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    LetterAvatar(
-                                      label: client?.name ?? '?',
-                                      color: pkg.isStopped
-                                          ? AppColors.textTertiary
-                                          : AppColors.purple,
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            client?.name ?? 'Unknown client',
-                                            style: AppFonts.montserrat(
-                                              size: 16,
-                                              weight: FontWeight.w700,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            formatInr(pkg.price),
-                                            style: AppFonts.poppins(
-                                              size: 14,
-                                              weight: FontWeight.w600,
-                                              color: AppColors.accent,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            pkg.isStopped
-                                                ? 'Stopped'
-                                                : progress.isEmpty
-                                                    ? (days != null
-                                                        ? 'Renews in $days day(s)'
-                                                        : 'Active package')
-                                                    : '${progress.label} posters · ${pkg.paymentStatus.label}',
-                                            style: AppFonts.helvetica(
-                                              size: 12,
-                                              color: pkg.isStopped
-                                                  ? AppColors.overdue
-                                                  : (pkg.isRenewalDueSoon()
-                                                      ? AppColors.warning
-                                                      : AppColors.textSecondary),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    _ProgressChip(
-                                      label: pkg.isStopped
-                                          ? 'Stop'
-                                          : (progress.isEmpty
-                                              ? pkg.paymentStatus.label
-                                              : progress.label),
-                                      complete: pkg.isPaid && !pkg.isStopped,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Icon(
-                                      CupertinoIcons.chevron_right,
-                                      size: 16,
-                                      color: AppColors.textTertiary,
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            childCount: packages.length + 1,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+        ),
       ),
     );
   }

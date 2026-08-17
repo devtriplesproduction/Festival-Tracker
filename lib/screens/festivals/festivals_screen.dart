@@ -46,9 +46,10 @@ class FestivalsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       child: SafeArea(
         bottom: false,
-        child: state.loading
-            ? const Center(child: CupertinoActivityIndicator())
-            : festivals.isEmpty
+        child: ResponsiveContent(
+          child: state.loading
+              ? const Center(child: CupertinoActivityIndicator())
+              : festivals.isEmpty
                 ? Column(
                     children: [
                       PageHeader(
@@ -87,16 +88,6 @@ class FestivalsScreen extends StatelessWidget {
                                   onPressed: () => _openEditor(context),
                                 )
                               : null,
-                        ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: context.pageInsetsOnly(bottom: 10),
-                          child: InfoBanner(
-                            message:
-                                'Tap any festival to edit its date. Lunar dates are estimates — update them each year; linked job deadlines recalculate on save.',
-                            icon: CupertinoIcons.moon_stars,
-                          ),
                         ),
                       ),
                       SliverPadding(
@@ -265,6 +256,7 @@ class FestivalsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+        ),
       ),
     );
   }
@@ -583,20 +575,6 @@ class _FestivalEditorScreenState extends State<FestivalEditorScreen> {
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            InfoBanner(
-              message: _dateChanged
-                  ? 'Date changed — saving will recalculate Design / QC / Ready / Send '
-                      'deadlines for all jobs linked to this festival.\n'
-                      'Offsets: −${offsets.designDaysBefore} / −${offsets.qcDaysBefore} / '
-                      '−${offsets.readyDaysBefore} / −${offsets.sendDaysBefore} days'
-                  : 'Auto deadlines from this date:\n'
-                      'Design −${offsets.designDaysBefore} · QC −${offsets.qcDaysBefore} · '
-                      'Ready −${offsets.readyDaysBefore} · Send −${offsets.sendDaysBefore}',
-              icon: _dateChanged
-                  ? CupertinoIcons.arrow_2_circlepath
-                  : CupertinoIcons.info_circle_fill,
             ),
             const SizedBox(height: 24),
             PrimaryButton(

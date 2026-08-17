@@ -5,275 +5,306 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/utils/date_formatters.dart';
 import '../../models/notification_log.dart';
+import '../../models/user_role.dart';
 import '../../providers/app_state.dart';
 import '../../providers/auth_state.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/ui_kit.dart';
 
-class AlertsScreen extends StatefulWidget {
+class AlertsScreen extends StatelessWidget {
   const AlertsScreen({super.key});
-
-  @override
-  State<AlertsScreen> createState() => _AlertsScreenState();
-}
-
-class _AlertsScreenState extends State<AlertsScreen> {
-  bool _running = false;
-
-  Future<void> _runCheck() async {
-    setState(() => _running = true);
-    final count = await context.read<AppState>().runDailyCheck();
-    if (!mounted) return;
-    setState(() => _running = false);
-    await showCupertinoDialog<void>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Check complete'),
-        content: Text(count == 0 ? 'No new alerts.' : 'Created $count alert(s).'),
-        actions: [
-          CupertinoDialogAction(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _clearAll() async {
-    final ok = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Clear all alerts?'),
-        content: const Text('Removes the in-app notification log.'),
-        actions: [
-          CupertinoDialogAction(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
-    );
-    if (ok == true && mounted) {
-      await context.read<AppState>().clearNotifications();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final uid = context.read<AuthState>().user?.id ?? '';
-    final list = state.notifications.where((n) => !n.readBy.contains(uid)).toList();
+    final authState = context.watch<AuthState>();
+    final uid = authState.user?.id ?? '';
+    final role = authState.role ?? UserRole.designer;
+
+    final seenIds = <String>{};
+    final list = state.notifications.where((n) {
+      if (n.readBy.contains(uid)) return false;
+      if (role != UserRole.admin && n.recipientRole != 'all' && n.recipientRole.toLowerCase() != role.value.toLowerCase()) {
+        return false;
+      }
+      // Deduplicate identical alerts
+      return seenIds.add(n.id);
+    }).toList();
+
     final unread = list.length;
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
       child: SafeArea(
         bottom: false,
-        child: list.isEmpty
-            ? Column(
-                children: [
-                  PageHeader(
-                    title: 'Alerts',
-                    subtitle: 'Upload · send · overdue reminders',
-                    trailing: CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: _running ? null : _runCheck,
-                      child: _running
-                          ? const CupertinoActivityIndicator()
-                          : Text(
-                              'Run check',
-                              style: AppFonts.poppins(
-                                size: 14,
-                                weight: FontWeight.w700,
-                                color: AppColors.accent,
-                              ),
-                            ),
-                    ),
-                  ),
-                  Expanded(
-                    child: EmptyState(
-                      icon: CupertinoIcons.bell,
-                      title: 'All clear',
-                      message:
-                          'Run a check anytime to scan for missing posters, pending sends, and overdue jobs.',
-                      actionLabel: 'Run check now',
-                      onAction: _runCheck,
-                    ),
-                  ),
-                ],
-              )
-            : CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: PageHeader(
+        child: ResponsiveContent(
+          child: list.isEmpty
+              ? const Column(
+                  children: [
+                    PageHeader(
                       title: 'Alerts',
-                      subtitle: unread > 0
-                          ? '$unread unread · tap an alert to mark read'
-                          : 'All read · run check for fresh scans',
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CupertinoButton(
-                            padding: const EdgeInsets.only(right: 4),
-                            onPressed: _clearAll,
-                            child: const Icon(
-                              CupertinoIcons.trash,
-                              size: 20,
-                              color: AppColors.textTertiary,
-                            ),
-                          ),
-                          CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            onPressed: _running ? null : _runCheck,
-                            child: _running
-                                ? const CupertinoActivityIndicator()
-                                : Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.accent,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      'Run check',
-                                      style: AppFonts.poppins(
-                                        size: 13,
-                                        weight: FontWeight.w700,
-                                        color: CupertinoColors.white,
-                                      ),
-                                    ),
-                                  ),
-                          ),
-                        ],
+                      subtitle: 'Upload · send · overdue reminders',
+                    ),
+                    Expanded(
+                      child: EmptyState(
+                        icon: CupertinoIcons.bell_slash,
+                        title: 'All caught up',
+                        message:
+                            'You have no new alerts. New notifications and workflow updates will appear here automatically.',
                       ),
                     ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.only(bottom: 100, top: 4),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          if (index == list.length) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                              child: CupertinoButton(
-                                color: AppColors.surface,
-                                onPressed: state.loadingMoreNotifications
-                                    ? null
-                                    : () => state.loadMoreNotifications(),
-                                child: state.loadingMoreNotifications
-                                    ? const CupertinoActivityIndicator()
-                                    : Text(
-                                        'Load Older Alerts',
-                                        style: AppFonts.poppins(
-                                          size: 14,
-                                          weight: FontWeight.w600,
-                                          color: AppColors.textPrimary,
+                  ],
+                )
+              : CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: PageHeader(
+                        title: 'Alerts',
+                        subtitle: unread > 0
+                            ? '$unread unread · tap to mark read'
+                            : 'All caught up',
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.pagePadding,
+                        vertical: 4,
+                      ),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            if (index == list.length) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                child: Center(
+                                  child: state.loadingMoreNotifications
+                                      ? const CupertinoActivityIndicator()
+                                      : CupertinoButton(
+                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                          onPressed: () => state.loadMoreNotifications(),
+                                          child: Text(
+                                            'Load Older Alerts',
+                                            style: AppFonts.poppins(
+                                              size: 14,
+                                              weight: FontWeight.w600,
+                                              color: AppColors.accent,
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                ),
+                              );
+                            }
+                            final n = list[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _AlertTile(
+                                log: n,
+                                uid: uid,
+                                onTap: () => context.read<AppState>().markNotificationRead(n.id, uid),
                               ),
                             );
-                          }
-                          final n = list[index];
-                          return _AlertTile(
-                            log: n,
-                            uid: uid,
-                            onTap: () => context.read<AppState>().markNotificationRead(n.id, uid),
-                          );
-                        },
-                        childCount: list.length + (state.hasMoreNotifications ? 1 : 0),
+                          },
+                          childCount: list.length + (state.hasMoreNotifications ? 1 : 0),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 80),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }
 }
 
 class _AlertTile extends StatelessWidget {
-  const _AlertTile({required this.log, required this.onTap, required this.uid});
+  const _AlertTile({
+    required this.log,
+    required this.onTap,
+    required this.uid,
+  });
 
   final NotificationLog log;
   final VoidCallback onTap;
   final String uid;
 
-  Color get _tint {
+  bool get _isUrgent {
     switch (log.type) {
-      case NotificationType.uploadReminder:
-        return AppColors.warning;
-      case NotificationType.sendReminder:
-        return AppColors.purple;
       case NotificationType.overdueAlert:
-        return AppColors.overdue;
-      case NotificationType.packageRenewal:
-        return AppColors.teal;
+      case NotificationType.overdueReminder:
+      case NotificationType.qcRejected:
+      case NotificationType.uploadFailed:
+        return true;
       default:
-        return AppColors.accent;
+        return false;
     }
   }
+
+  Color get _color => _isUrgent ? AppColors.overdue : AppColors.accent;
+  Color get _bg => _isUrgent ? AppColors.overdueSoft : AppColors.accentSoft;
 
   IconData get _icon {
     switch (log.type) {
       case NotificationType.uploadReminder:
-        return CupertinoIcons.link;
+      case NotificationType.deadlineReminder:
+        return CupertinoIcons.clock_fill;
       case NotificationType.sendReminder:
+      case NotificationType.readyToSend:
         return CupertinoIcons.paperplane_fill;
       case NotificationType.overdueAlert:
+      case NotificationType.overdueReminder:
         return CupertinoIcons.exclamationmark_triangle_fill;
       case NotificationType.packageRenewal:
+      case NotificationType.packageExpiry:
         return CupertinoIcons.arrow_2_circlepath;
-      default:
-        return CupertinoIcons.bell_fill;
+      case NotificationType.newAssignment:
+        return CupertinoIcons.person_crop_circle_badge_plus;
+      case NotificationType.qcUploaded:
+        return CupertinoIcons.cloud_upload_fill;
+      case NotificationType.qcRejected:
+        return CupertinoIcons.xmark_circle_fill;
+      case NotificationType.qcApproved:
+        return CupertinoIcons.checkmark_seal_fill;
+      case NotificationType.posterSent:
+        return CupertinoIcons.paperplane_fill;
+      case NotificationType.uploadFailed:
+        return CupertinoIcons.exclamationmark_circle_fill;
+      case NotificationType.upcomingFestival:
+        return CupertinoIcons.calendar;
     }
+  }
+
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return formatDate(dt);
   }
 
   @override
   Widget build(BuildContext context) {
     final isRead = log.readBy.contains(uid);
+    final color = _color;
+    final bg = _bg;
+
     return AppCard(
-      margin: EdgeInsets.symmetric(horizontal: context.pagePadding, vertical: 5),
-      highlightColor: isRead ? null : _tint,
+      padding: const EdgeInsets.all(14),
       onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconBadge(icon: _icon, color: _tint, size: 42),
+          // Icon badge matching app design
+          IconBadge(
+            icon: _icon,
+            color: color,
+            bg: bg,
+            size: 42,
+          ),
           const SizedBox(width: 12),
+          // Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Type tag & relative timestamp
                 Row(
                   children: [
-                    Expanded(
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                       child: Text(
                         log.type.label,
-                        style: AppFonts.poppins(
-                          size: 12,
+                        style: AppFonts.montserrat(
+                          size: 11,
                           weight: FontWeight.w700,
-                          color: _tint,
+                          color: color,
                         ),
                       ),
                     ),
-                    if (!isRead)
+                    const Spacer(),
+                    Text(
+                      _formatTime(log.sentAt),
+                      style: AppFonts.helvetica(
+                        size: 11,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                    if (!isRead) ...[
+                      const SizedBox(width: 6),
                       Container(
-                        width: 8,
-                        height: 8,
+                        width: 7,
+                        height: 7,
                         decoration: BoxDecoration(
-                          color: AppColors.accent,
+                          color: color,
                           shape: BoxShape.circle,
                         ),
                       ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(log.message, style: AppFonts.poppins(size: 14, height: 1.35)),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
+                // Message
                 Text(
-                  '${log.clientName} · ${formatDate(log.sentAt)}',
-                  style: AppFonts.helvetica(size: 11, color: AppColors.textTertiary),
+                  log.message,
+                  style: AppFonts.poppins(
+                    size: 13.5,
+                    weight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Client details footer
+                Row(
+                  children: [
+                    const Icon(
+                      CupertinoIcons.person_fill,
+                      size: 12,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        log.clientName,
+                        style: AppFonts.poppins(
+                          size: 12,
+                          weight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (log.festivalName.isNotEmpty) ...[
+                      Text(
+                        ' · ',
+                        style: AppFonts.helvetica(
+                          size: 12,
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                      Flexible(
+                        child: Text(
+                          log.festivalName,
+                          style: AppFonts.helvetica(
+                            size: 12,
+                            color: AppColors.textTertiary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

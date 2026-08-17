@@ -27,49 +27,39 @@ class ClientsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       child: SafeArea(
         bottom: false,
-        child: state.loading
-            ? const Center(child: CupertinoActivityIndicator())
-            : clients.isEmpty
-                ? Column(
-                    children: [
-                      PageHeader(
-                        title: 'Clients',
-                        subtitle: 'WhatsApp contacts for poster delivery',
-                        trailing: canEdit ? NavBarActionButton(label: 'Add', icon: CupertinoIcons.add, onPressed: () => _openEditor(context)) : null,
-                      ),
-                      Expanded(
-                        child: EmptyState(
-                          icon: CupertinoIcons.person_2,
-                          title: 'No clients yet',
-                          message:
-                              'Add name + WhatsApp. Optionally pick festivals to auto-create jobs.',
-                          actionLabel: canEdit ? 'Add client' : null,
-                          onAction: canEdit ? () => _openEditor(context) : null,
-                        ),
-                      ),
-                    ],
-                  )
-                : CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: PageHeader(
+        child: ResponsiveContent(
+          child: state.loading
+              ? const Center(child: CupertinoActivityIndicator())
+              : clients.isEmpty
+                  ? Column(
+                      children: [
+                        PageHeader(
                           title: 'Clients',
-                          subtitle:
-                              '${clients.length} contact${clients.length == 1 ? '' : 's'} · tap to edit',
+                          subtitle: 'WhatsApp contacts for poster delivery',
                           trailing: canEdit ? NavBarActionButton(label: 'Add', icon: CupertinoIcons.add, onPressed: () => _openEditor(context)) : null,
                         ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: context.pageInsetsOnly(bottom: 10),
-                          child: InfoBanner(
+                        Expanded(
+                          child: EmptyState(
+                            icon: CupertinoIcons.person_2,
+                            title: 'No clients yet',
                             message:
-                                'WhatsApp numbers use +91 automatically. Used when sending posters.',
-                            icon: CupertinoIcons.chat_bubble_2,
-                            color: AppColors.success,
+                                'Add name + WhatsApp. Optionally pick festivals to auto-create jobs.',
+                            actionLabel: canEdit ? 'Add client' : null,
+                            onAction: canEdit ? () => _openEditor(context) : null,
                           ),
                         ),
-                      ),
+                      ],
+                    )
+                  : CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: PageHeader(
+                            title: 'Clients',
+                            subtitle:
+                                '${clients.length} contact${clients.length == 1 ? '' : 's'} · tap to edit',
+                            trailing: canEdit ? NavBarActionButton(label: 'Add', icon: CupertinoIcons.add, onPressed: () => _openEditor(context)) : null,
+                          ),
+                        ),
                       SliverPadding(
                         padding: EdgeInsets.only(bottom: context.listBottomPadding),
                         sliver: SliverList(
@@ -197,6 +187,7 @@ class ClientsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+        ),
       ),
     );
   }

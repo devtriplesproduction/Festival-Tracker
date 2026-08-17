@@ -163,22 +163,7 @@ class _UploadPosterScreenState extends State<UploadPosterScreen> {
                   '$clientName · $festivalName',
                   style: AppFonts.montserrat(size: 15, weight: FontWeight.w700),
                 ),
-                const SizedBox(height: 12),
-                
-                if (!_isDriveConnected)
-                  const InfoBanner(
-                    message: 'Uploads disabled temporarily.',
-                    icon: CupertinoIcons.exclamationmark_triangle_fill,
-                    color: AppColors.warning,
-                  )
-                else
-                  const InfoBanner(
-                    message: 'Select a high-quality image or PDF to upload to Firebase Storage.',
-                    icon: CupertinoIcons.cloud_upload_fill,
-                    color: AppColors.success,
-                  ),
-                
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 AppCard(
                   padding: const EdgeInsets.all(24),
                   child: Column(

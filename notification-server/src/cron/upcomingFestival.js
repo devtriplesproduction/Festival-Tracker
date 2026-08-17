@@ -2,8 +2,8 @@ const cron = require('node-cron');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const NotificationService = require('../services/notification.service');
 
-// Run every day at 8 AM
-cron.schedule('0 8 * * *', async () => {
+// Run every day at 4:30 PM (16:30 IST) for testing
+cron.schedule('30 16 * * *', async () => {
     console.log('Running upcoming festivals cron job...');
     try {
         const db = getFirestore();
@@ -74,4 +74,6 @@ cron.schedule('0 8 * * *', async () => {
     } catch (error) {
         console.error('Error in upcoming festivals cron job:', error);
     }
+}, {
+    timezone: "Asia/Kolkata"
 });

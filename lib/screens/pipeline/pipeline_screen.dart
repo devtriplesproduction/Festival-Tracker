@@ -11,7 +11,6 @@ import '../../providers/auth_state.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/assignment_card.dart';
 import '../../widgets/empty_state.dart';
-import '../../widgets/overdue_banner.dart';
 import '../../widgets/ui_kit.dart';
 import 'upload_poster_screen.dart';
 
@@ -26,7 +25,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
   final _searchCtrl = TextEditingController();
   String _statusFilter = 'all';
   String _festivalFilter = 'all';
-  int _pageLimit = 20;
+  int _eventsLimit = 1;
 
   @override
   void dispose() {
@@ -43,8 +42,21 @@ class _PipelineScreenState extends State<PipelineScreen> {
       statusFilter: _statusFilter,
       festivalFilter: _festivalFilter,
     );
-    final rows = allRows.take(_pageLimit).toList();
-    final hasMore = allRows.length > _pageLimit;
+
+    // Extract distinct upcoming events/festivals in order of appearance
+    final orderedFestivalIds = <String>[];
+    for (final a in allRows) {
+      if (!orderedFestivalIds.contains(a.festivalId)) {
+        orderedFestivalIds.add(a.festivalId);
+      }
+    }
+
+    final visibleFestivalIds = orderedFestivalIds.take(_eventsLimit).toSet();
+    final rows = allRows.where((a) => visibleFestivalIds.contains(a.festivalId)).toList();
+    final hasMore = orderedFestivalIds.length > _eventsLimit;
+    final nextFestivalId = _eventsLimit < orderedFestivalIds.length ? orderedFestivalIds[_eventsLimit] : null;
+    final nextFestival = nextFestivalId != null ? state.festivalById(nextFestivalId) : null;
+    final nextFestivalName = nextFestival?.name;
     final canAssign = role.canCreateAssignments;
     final stats = state.stats;
 
@@ -52,37 +64,31 @@ class _PipelineScreenState extends State<PipelineScreen> {
       backgroundColor: AppColors.background,
       child: SafeArea(
         bottom: false,
-        child: state.loading
-            ? const Center(child: CupertinoActivityIndicator())
-            : CustomScrollView(
+        child: ResponsiveContent(
+          child: state.loading
+              ? const Center(child: CupertinoActivityIndicator())
+              : CustomScrollView(
                 slivers: [
-                  SliverToBoxAdapter(
+                  const SliverToBoxAdapter(
                     child: PageHeader(
                       title: 'Festival Tracker',
-                      subtitle: canAssign
-                          ? 'Jobs by deadline · Assign work or filter below'
-                          : 'Your jobs · nearest deadline first',
-                      trailing: canAssign
-                          ? NavBarActionButton(
-                              label: 'Assign',
-                              icon: CupertinoIcons.add,
-                              onPressed: () => _openAssign(context),
-                            )
-                          : null,
+                      subtitle: 'Track assignments & workflow status',
                     ),
                   ),
 
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: context.pageInsets,
-                      child: CupertinoSearchTextField(
+                      child: AppSearchField(
                         controller: _searchCtrl,
                         placeholder: 'Search client or festival',
-                        onChanged: (_) => setState(() {}),
-                        style: AppFonts.poppins(size: 15),
-                        backgroundColor: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        onChanged: (_) => setState(() {
+                          _eventsLimit = 1;
+                        }),
+                        onClear: () => setState(() {
+                          _searchCtrl.clear();
+                          _eventsLimit = 1;
+                        }),
                       ),
                     ),
                   ),
@@ -100,7 +106,10 @@ class _PipelineScreenState extends State<PipelineScreen> {
                           FilterChipPill(
                             label: 'All',
                             selected: _statusFilter == 'all',
-                            onTap: () => setState(() => _statusFilter = 'all'),
+                            onTap: () => setState(() {
+                              _statusFilter = 'all';
+                              _eventsLimit = 1;
+                            }),
                           ),
                           FilterChipPill(
                             label: 'Overdue',
@@ -110,15 +119,19 @@ class _PipelineScreenState extends State<PipelineScreen> {
                             count: stats.monthOverdue > 0
                                 ? stats.monthOverdue
                                 : null,
-                            onTap: () => setState(
-                              () => _statusFilter = 'month_overdue',
-                            ),
+                            onTap: () => setState(() {
+                              _statusFilter = 'month_overdue';
+                              _eventsLimit = 1;
+                            }),
                           ),
                           ...AssignmentStatus.values.map(
                             (s) => FilterChipPill(
                               label: s.label,
                               selected: _statusFilter == s.value,
-                              onTap: () => setState(() => _statusFilter = s.value),
+                              onTap: () => setState(() {
+                                _statusFilter = s.value;
+                                _eventsLimit = 1;
+                              }),
                             ),
                           ),
                         ],
@@ -163,6 +176,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
                                 _statusFilter = 'all';
                                 _festivalFilter = 'all';
                                 _searchCtrl.clear();
+                                _eventsLimit = 1;
                               }),
                             ),
                           ],
@@ -174,7 +188,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
                       child: Padding(
                         padding: context.pageInsetsOnly(top: 4, bottom: 6),
                         child: Text(
-                          '${rows.length} job${rows.length == 1 ? '' : 's'} · tap card to change stage',
+                          '${rows.length} job${rows.length == 1 ? '' : 's'}${orderedFestivalIds.isNotEmpty ? ' · ${visibleFestivalIds.length} of ${orderedFestivalIds.length} event${orderedFestivalIds.length == 1 ? '' : 's'}' : ''} · tap card to change stage',
                           style: AppFonts.helvetica(size: 12, color: AppColors.textTertiary),
                         ),
                       ),
@@ -187,15 +201,18 @@ class _PipelineScreenState extends State<PipelineScreen> {
                             if (index == rows.length) {
                               if (hasMore) {
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
                                   child: Center(
-                                    child: CupertinoButton(
+                                    child: SecondaryButton(
+                                      icon: CupertinoIcons.arrow_down_circle,
+                                      label: nextFestivalName != null && nextFestivalName.isNotEmpty
+                                          ? 'Load More ($nextFestivalName)'
+                                          : 'Load More',
                                       onPressed: () {
                                         setState(() {
-                                          _pageLimit += 20;
+                                          _eventsLimit += 1;
                                         });
                                       },
-                                      child: const Text('Load More'),
                                     ),
                                   ),
                                 );
@@ -204,7 +221,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
                                   padding: const EdgeInsets.symmetric(vertical: 20),
                                   child: Center(
                                     child: Text(
-                                      'No more jobs',
+                                      'All upcoming events loaded',
                                       style: AppFonts.helvetica(size: 13, color: AppColors.textTertiary),
                                     ),
                                   ),
@@ -253,6 +270,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
                   ],
                 ],
               ),
+        ),
       ),
     );
   }
@@ -419,10 +437,6 @@ class _AssignWorkScreenState extends State<AssignWorkScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const InfoBanner(
-              message: 'Links one client to one festival and auto-builds Design → QC → Ready → Send deadlines.',
-            ),
-            const SizedBox(height: 20),
             const SectionLabel('1 · Client'),
             const SizedBox(height: 8),
             if (state.clients.isEmpty)
