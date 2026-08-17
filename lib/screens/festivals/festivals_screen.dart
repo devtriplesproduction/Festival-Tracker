@@ -144,32 +144,15 @@ class FestivalsScreen extends StatelessWidget {
                                 onTap: canEdit ? () => _openEditor(context, festival: f) : null,
                                 child: Row(
                                   children: [
-                                    Container(
+                                    SizedBox(
                                       width: 54,
-                                      height: 54,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: isPast
-                                              ? [
-                                                  AppColors.borderSubtle,
-                                                  AppColors.surfaceMuted,
-                                                ]
-                                              : [
-                                                  AppColors.accentSoft,
-                                                  const Color(0xFFD0DAFF),
-                                                ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
                                       child: Column(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             '${f.date.day}',
                                             style: AppFonts.montserrat(
-                                              size: 18,
+                                              size: 24,
                                               weight: FontWeight.w800,
                                               color: isPast
                                                   ? AppColors.textTertiary
@@ -177,13 +160,13 @@ class FestivalsScreen extends StatelessWidget {
                                             ),
                                           ),
                                           Text(
-                                            formatDateShort(f.date).split(' ').last,
+                                            formatDateShort(f.date).split(' ').last.toUpperCase(),
                                             style: AppFonts.poppins(
-                                              size: 10,
+                                              size: 12,
                                               weight: FontWeight.w700,
                                               color: isPast
                                                   ? AppColors.textTertiary
-                                                  : AppColors.accent,
+                                                  : const Color(0xFF3B5BDB),
                                             ),
                                           ),
                                         ],
@@ -242,6 +225,20 @@ class FestivalsScreen extends StatelessWidget {
                                         ],
                                       ),
                                     ),
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          '12',
+                                          style: AppFonts.montserrat(size: 14, weight: FontWeight.w700),
+                                        ),
+                                        Text(
+                                          'Jobs',
+                                          style: AppFonts.helvetica(size: 11),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 8),
                                     if (canEdit) ...[
                                       CupertinoButton(
                                         padding: EdgeInsets.zero,
@@ -252,12 +249,12 @@ class FestivalsScreen extends StatelessWidget {
                                           color: AppColors.textTertiary,
                                         ),
                                       ),
-                                      const Icon(
-                                        CupertinoIcons.chevron_right,
-                                        size: 16,
-                                        color: AppColors.textTertiary,
-                                      ),
                                     ],
+                                    const Icon(
+                                      CupertinoIcons.chevron_right,
+                                      size: 16,
+                                      color: AppColors.textTertiary,
+                                    ),
                                   ],
                                 ),
                               );

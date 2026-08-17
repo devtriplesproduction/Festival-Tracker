@@ -74,7 +74,7 @@ class _AssignmentCardState extends State<AssignmentCard> {
 
     return AppCard(
       overdue: false, // Disabling card-level overdue highlight to avoid full red theme
-      margin: EdgeInsets.symmetric(horizontal: p * 0.85, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: p * 0.85, vertical: 4),
       padding: EdgeInsets.fromLTRB(
         compact ? 12 : 16,
         compact ? 12 : 16,
@@ -456,21 +456,21 @@ class _RoleActions extends StatelessWidget {
       return Row(
         children: [
           Expanded(
-            child: SecondaryButton(
-              label: 'Changes',
-              icon: CupertinoIcons.arrow_uturn_left,
-              color: AppColors.warning,
-              onPressed: onQcRequestChanges,
-            ),
+              child: SecondaryButton(
+                label: 'Changes',
+                icon: CupertinoIcons.arrow_uturn_left,
+                color: AppColors.accent,
+                onPressed: onQcRequestChanges,
+              ),
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: PrimaryButton(
-              label: 'Approve',
-              icon: CupertinoIcons.checkmark_seal_fill,
-              color: AppColors.purple,
-              onPressed: onQcApprove,
-            ),
+              child: PrimaryButton(
+                label: 'Approve',
+                icon: CupertinoIcons.checkmark_seal_fill,
+                color: AppColors.accent,
+                onPressed: onQcApprove,
+              ),
           ),
         ],
       );
@@ -488,6 +488,7 @@ class _RoleActions extends StatelessWidget {
               child: SecondaryButton(
                 label: assignment.hasPoster ? 'Edit link' : 'Add link',
                 icon: CupertinoIcons.link,
+                color: AppColors.accent,
                 onPressed: onUpload,
                 expanded: true,
               ),
@@ -497,11 +498,11 @@ class _RoleActions extends StatelessWidget {
           Expanded(
             flex: role.canUploadPoster ? 1 : 1,
             child: PrimaryButton(
-              label: assignment.status == AssignmentStatus.sent ? 'Resend' : 'WhatsApp',
-              icon: CupertinoIcons.chat_bubble_2_fill,
-              color: AppColors.success,
-              onPressed: onSendWhatsApp,
-            ),
+                label: assignment.status == AssignmentStatus.sent ? 'Resend' : 'WhatsApp',
+                icon: CupertinoIcons.chat_bubble_2_fill,
+                color: AppColors.accent,
+                onPressed: onSendWhatsApp,
+              ),
           ),
         ],
       );
@@ -511,7 +512,7 @@ class _RoleActions extends StatelessWidget {
       return PrimaryButton(
         label: assignment.hasPoster ? 'Update poster link' : 'Attach poster link',
         icon: CupertinoIcons.link,
-        color: AppColors.warning,
+        color: AppColors.accent,
         onPressed: onUpload,
       );
     }

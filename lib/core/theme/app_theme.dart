@@ -185,22 +185,17 @@ class AppShadows {
 
   static List<BoxShadow> get card => [
         BoxShadow(
-          color: const Color(0x0D1A237E),
-          blurRadius: 16,
-          offset: const Offset(0, 4),
-        ),
-        BoxShadow(
-          color: const Color(0x08000000),
-          blurRadius: 4,
-          offset: const Offset(0, 1),
+          color: const Color(0x05000000),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
         ),
       ];
 
   static List<BoxShadow> get soft => [
         BoxShadow(
-          color: const Color(0x0A1A237E),
-          blurRadius: 10,
-          offset: const Offset(0, 2),
+          color: const Color(0x03000000),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
         ),
       ];
 }

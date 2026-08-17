@@ -313,11 +313,7 @@ class AccountScreen extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(context.isCompact ? 18 : 22),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF3B5BDB), Color(0xFF5C7CFA)],
-                      ),
+                      color: AppColors.accent,
                       borderRadius: BorderRadius.circular(22),
                       boxShadow: AppShadows.card,
                     ),
@@ -362,16 +358,17 @@ class AccountScreen extends StatelessWidget {
                             color: const Color(0xCCFFFFFF),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            _miniStat('${stats.total}', 'Jobs'),
-                            _miniStat('${stats.overdueCount}', 'Overdue'),
-                            _miniStat('${stats.readyToSend}', 'Ready'),
-                          ],
-                        ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      _miniStat('${stats.total}', 'Jobs', color: const Color(0xFF2196F3)),
+                      _miniStat('${stats.overdueCount}', 'Overdue', color: AppColors.overdue),
+                      _miniStat('${stats.readyToSend}', 'Ready', color: const Color(0xFF4CAF50)),
+                      _miniStat('${stats.sent}', 'Sent', color: const Color(0xFF9C27B0)),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   if (app.usingLocalStore)
@@ -587,34 +584,28 @@ class AccountScreen extends StatelessWidget {
     ctrl.dispose();
   }
 
-  Widget _miniStat(String value, String label) {
+  Widget _miniStat(String value, String label, {Color color = AppColors.textPrimary}) {
     return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0x22FFFFFF),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: AppFonts.montserrat(
-                size: 18,
-                weight: FontWeight.w800,
-                color: const Color(0xFFFFFFFF),
-              ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: AppFonts.montserrat(
+              size: 24,
+              weight: FontWeight.w700,
+              color: color,
             ),
-            Text(
-              label,
-              style: AppFonts.poppins(
-                size: 11,
-                color: const Color(0xCCFFFFFF),
-              ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: AppFonts.poppins(
+              size: 11,
+              weight: FontWeight.w600,
+              color: AppColors.textSecondary,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -638,23 +629,25 @@ class _SettingsTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: EdgeInsets.all(context.isCompact ? 14 : 16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: AppShadows.soft,
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: EdgeInsets.symmetric(
+            vertical: context.isCompact ? 14 : 16, horizontal: 8),
+        color: const Color(0x00000000),
         child: Row(
           children: [
-            IconBadge(icon: icon, size: context.isCompact ? 38 : 42),
-            const SizedBox(width: 12),
+            Icon(
+              icon,
+              size: context.isCompact ? 24 : 28,
+              color: AppColors.accent,
+            ),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: AppFonts.montserrat(size: 15, weight: FontWeight.w700)),
+                  Text(title,
+                      style: AppFonts.montserrat(
+                          size: 15, weight: FontWeight.w700)),
                   Text(
                     subtitle,
                     style: AppFonts.helvetica(size: 12),
@@ -664,7 +657,8 @@ class _SettingsTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(CupertinoIcons.chevron_right, size: 16, color: AppColors.textTertiary),
+            const Icon(CupertinoIcons.chevron_right,
+                size: 16, color: AppColors.textTertiary),
           ],
         ),
       ),
