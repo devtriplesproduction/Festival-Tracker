@@ -72,6 +72,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
+      navigationBar: const CupertinoNavigationBar(backgroundColor: Color(0x00000000), border: null, leading: AppBackButton(margin: EdgeInsets.only(left: 8))),
       child: SafeArea(
         bottom: false,
         child: ResponsiveContent(
@@ -317,3 +318,5 @@ class _GalleryItemCard extends StatelessWidget {
     );
   }
 }
+
+

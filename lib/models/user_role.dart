@@ -2,8 +2,7 @@
 enum UserRole {
   admin('admin', 'Admin'),
   designer('designer', 'Designer'),
-  manager('manager', 'Manager'),
-  qc('qc', 'QC');
+  manager('manager', 'Manager');
 
   const UserRole(this.value, this.label);
 
@@ -34,7 +33,7 @@ enum UserRole {
       this == UserRole.admin || this == UserRole.designer;
   bool get canSendWhatsApp =>
       this == UserRole.admin || this == UserRole.manager;
-  bool get canQcReview => this == UserRole.admin || this == UserRole.qc;
+  bool get canQcReview => this == UserRole.admin;
   bool get canManageSettings => this == UserRole.admin;
   bool get canViewAlerts => true;
 
@@ -59,10 +58,6 @@ enum UserRole {
         return statusValue == 'ready' ||
             statusValue == 'sent' ||
             statusValue == 'qc';
-      case UserRole.qc:
-        return statusValue == 'design' ||
-            statusValue == 'qc' ||
-            statusValue == 'ready';
     }
   }
 }

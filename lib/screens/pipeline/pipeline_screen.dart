@@ -422,7 +422,7 @@ class _AssignWorkScreenState extends State<AssignWorkScreen> {
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
-      navigationBar: CupertinoNavigationBar(
+      navigationBar: CupertinoNavigationBar(leading: const AppBackButton(margin: EdgeInsets.only(left: 8)), 
         backgroundColor: AppColors.background.withValues(alpha: 0.94),
         border: null,
         middle: Text('New job', style: AppFonts.montserrat(size: 17, weight: FontWeight.w700)),
@@ -532,3 +532,4 @@ class _AssignWorkScreenState extends State<AssignWorkScreen> {
     );
   }
 }
+

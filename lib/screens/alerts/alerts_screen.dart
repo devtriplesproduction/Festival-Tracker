@@ -11,6 +11,7 @@ import '../../providers/auth_state.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/ui_kit.dart';
+import '../../services/whatsapp_service.dart';
 
 class AlertsScreen extends StatelessWidget {
   const AlertsScreen({super.key});
@@ -24,6 +25,7 @@ class AlertsScreen extends StatelessWidget {
 
     final seenIds = <String>{};
     final list = state.notifications.where((n) {
+      if (n.type == NotificationType.newAssignment) return false;
       if (n.readBy.contains(uid)) return false;
       if (role != UserRole.admin && n.recipientRole != 'all' && n.recipientRole.toLowerCase() != role.value.toLowerCase()) {
         return false;
@@ -36,6 +38,11 @@ class AlertsScreen extends StatelessWidget {
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
+      navigationBar: const CupertinoNavigationBar(
+        backgroundColor: Color(0x00000000),
+        border: null,
+        leading: AppBackButton(margin: EdgeInsets.only(left: 8)),
+      ),
       child: SafeArea(
         bottom: false,
         child: ResponsiveContent(
@@ -195,6 +202,9 @@ class _AlertTile extends StatelessWidget {
     final color = _color;
     final bg = _bg;
 
+    final isPackageAlert = log.type == NotificationType.packageExpiry || log.type == NotificationType.packageRenewal;
+    final hasClient = log.clientId.isNotEmpty;
+
     return AppCard(
       padding: const EdgeInsets.all(14),
       onTap: onTap,
@@ -306,6 +316,38 @@ class _AlertTile extends StatelessWidget {
                     ],
                   ],
                 ),
+                if (isPackageAlert && hasClient) ...[
+                  const SizedBox(height: 12),
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    color: const Color(0xFF25D366),
+                    borderRadius: BorderRadius.circular(8),
+                    minSize: 0,
+                    onPressed: () {
+                      final client = context.read<AppState>().clientById(log.clientId);
+                      if (client != null && client.whatsappNumber.isNotEmpty) {
+                        final price = client.packagePrice ?? 2500.0; // fallback default
+                        WhatsAppService.openBillingChat(
+                          phoneNumber: client.whatsappNumber,
+                          clientName: client.name,
+                          isExpired: log.type == NotificationType.packageExpiry,
+                          price: price,
+                        );
+                      }
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(CupertinoIcons.chat_bubble_text_fill, size: 14, color: CupertinoColors.white),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Message on WhatsApp',
+                          style: AppFonts.poppins(size: 12, weight: FontWeight.w600, color: CupertinoColors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

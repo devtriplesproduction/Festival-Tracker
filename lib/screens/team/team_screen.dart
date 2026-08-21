@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -20,6 +20,7 @@ class TeamScreen extends StatelessWidget {
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
+      navigationBar: const CupertinoNavigationBar(backgroundColor: Color(0x00000000), border: null, leading: AppBackButton(margin: EdgeInsets.only(left: 8))),
       child: SafeArea(
         bottom: false,
         child: ResponsiveContent(
@@ -28,7 +29,7 @@ class TeamScreen extends StatelessWidget {
                   children: [
                     PageHeader(
                       title: 'Team',
-                      subtitle: 'Designer · Manager · QC accounts',
+                      subtitle: 'Designer · Manager accounts',
                       trailing: NavBarActionButton(
                         label: 'Add',
                         icon: CupertinoIcons.add,
@@ -102,7 +103,7 @@ class TeamScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text('New password for ${user.username}'),
               const SizedBox(height: 12),
-              CupertinoTextField(
+              AppTextField(
                 controller: ctrl,
                 placeholder: 'Min 6 characters',
                 obscureText: obscure,
@@ -194,8 +195,6 @@ class _UserTile extends StatelessWidget {
         return AppColors.warning;
       case UserRole.manager:
         return AppColors.success;
-      case UserRole.qc:
-        return AppColors.purple;
     }
   }
 
@@ -221,7 +220,6 @@ class _UserTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: _roleColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(99),
@@ -319,7 +317,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
-      navigationBar: CupertinoNavigationBar(
+      navigationBar: CupertinoNavigationBar(leading: const AppBackButton(margin: EdgeInsets.only(left: 8)), 
         backgroundColor: AppColors.background.withValues(alpha: 0.94),
         border: null,
         middle: Text(
@@ -390,7 +388,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
               final selected = _role == r;
               return AppCard(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 highlightColor: selected ? AppColors.accent : null,
                 onTap: () => setState(() => _role = r),
                 child: Row(
@@ -434,8 +431,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         return 'Attach poster links · advance design stages';
       case UserRole.manager:
         return 'Clients · assign · WhatsApp send';
-      case UserRole.qc:
-        return 'Approve ready · request changes';
     }
   }
 }
+
+
+

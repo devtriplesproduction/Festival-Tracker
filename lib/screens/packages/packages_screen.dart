@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -81,6 +81,7 @@ class _PackagesScreenState extends State<PackagesScreen> {
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
+      navigationBar: const CupertinoNavigationBar(backgroundColor: Color(0x00000000), border: null, leading: AppBackButton(margin: EdgeInsets.only(left: 8))),
       child: SafeArea(
         bottom: false,
         child: ResponsiveContent(
@@ -302,8 +303,6 @@ class _YearFilter extends StatelessWidget {
             child: GestureDetector(
               onTap: () => onChanged(y),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: selected ? AppColors.accent : AppColors.surface,
                   borderRadius: BorderRadius.circular(99),
@@ -340,7 +339,6 @@ class _ProgressChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: complete ? AppColors.success.withValues(alpha: 0.12) : AppColors.accentSoft,
         borderRadius: BorderRadius.circular(99),
@@ -546,7 +544,7 @@ class PackageDetailScreen extends StatelessWidget {
         content: Column(
           children: [
             const SizedBox(height: 12),
-            CupertinoTextField(
+            AppTextField(
               controller: priceCtrl,
               placeholder: 'New price',
               keyboardType:
@@ -555,13 +553,11 @@ class PackageDetailScreen extends StatelessWidget {
                 padding: EdgeInsets.only(left: 10),
                 child: Text('₹'),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
             const SizedBox(height: 10),
-            CupertinoTextField(
+            AppTextField(
               controller: noteCtrl,
               placeholder: 'Note (optional)',
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
           ],
         ),
@@ -737,7 +733,7 @@ class PackageDetailScreen extends StatelessWidget {
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
-      navigationBar: CupertinoNavigationBar(
+      navigationBar: CupertinoNavigationBar(leading: const AppBackButton(margin: EdgeInsets.only(left: 8)), 
         backgroundColor: AppColors.background.withValues(alpha: 0.94),
         border: null,
         middle: Text(
@@ -1003,8 +999,6 @@ class PackageDetailScreen extends StatelessWidget {
               ...progress.items.map((item) {
                 return AppCard(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   highlightColor: item.delivered ? AppColors.success : null,
                   child: Row(
                     children: [
@@ -1128,3 +1122,6 @@ class PackageDetailScreen extends StatelessWidget {
     );
   }
 }
+
+
+

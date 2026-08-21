@@ -458,7 +458,7 @@ class _FestivalEditorScreenState extends State<FestivalEditorScreen> {
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
-      navigationBar: CupertinoNavigationBar(
+      navigationBar: CupertinoNavigationBar(leading: const AppBackButton(margin: EdgeInsets.only(left: 8)), 
         backgroundColor: AppColors.background.withValues(alpha: 0.94),
         border: null,
         middle: Text(
@@ -588,3 +588,4 @@ class _FestivalEditorScreenState extends State<FestivalEditorScreen> {
     );
   }
 }
+

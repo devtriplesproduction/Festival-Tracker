@@ -4,6 +4,39 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/utils/responsive.dart';
 
+/// A premium back navigation button used across the app
+class AppBackButton extends StatelessWidget {
+  const AppBackButton({super.key, this.margin});
+
+  final EdgeInsetsGeometry? margin;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!Navigator.of(context).canPop()) return const SizedBox.shrink();
+
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      minSize: 0,
+      onPressed: () => Navigator.of(context).pop(),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        margin: margin,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.borderSubtle),
+          boxShadow: AppShadows.soft,
+        ),
+        child: const Icon(
+          CupertinoIcons.arrow_left,
+          size: 20,
+          color: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+}
+
 /// Page top: title + short “what to do” line.
 class PageHeader extends StatelessWidget {
   const PageHeader({
@@ -22,29 +55,34 @@ class PageHeader extends StatelessWidget {
     final p = context.pagePadding;
     final narrow = context.screenWidth < 360;
     final stackTrailing = trailing != null && context.screenWidth < 340;
-
-    final titleBlock = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final titleBlock = Row(
       children: [
-        Text(
-          title,
-          style: AppFonts.montserrat(
-            size: context.titleFontSize,
-            weight: FontWeight.w800,
-            letterSpacing: -0.6,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppFonts.montserrat(
+                  size: context.titleFontSize,
+                  weight: FontWeight.w800,
+                  letterSpacing: -0.6,
+                ),
+              ),
+              if (subtitle != null && subtitle!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle!,
+                  style: AppFonts.poppins(
+                    size: narrow ? 12 : 13,
+                    color: AppColors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-        if (subtitle != null && subtitle!.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            subtitle!,
-            style: AppFonts.poppins(
-              size: narrow ? 12 : 13,
-              color: AppColors.textSecondary,
-              height: 1.35,
-            ),
-          ),
-        ],
       ],
     );
 

@@ -1,7 +1,10 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart'
     show
         Badge,
+        Colors,
+        InkWell,
+        Material,
         NavigationRail,
         NavigationRailDestination,
         NavigationRailLabelType,
@@ -17,13 +20,9 @@ import '../../providers/auth_state.dart';
 import '../../core/services/onesignal_service.dart';
 import '../../widgets/ui_kit.dart';
 import '../alerts/alerts_screen.dart';
-import '../clients/clients_screen.dart';
 import '../festivals/festivals_screen.dart';
-import '../packages/packages_screen.dart';
+import '../management/studio_management_screen.dart';
 import '../pipeline/pipeline_screen.dart';
-import '../settings/deadline_settings_screen.dart';
-import '../team/team_screen.dart';
-import '../gallery/gallery_screen.dart';
 
 /// Role-aware shell: bottom tabs on phones, side rail on tablets.
 class MainShell extends StatefulWidget {
@@ -112,7 +111,7 @@ class _MainShellState extends State<MainShell> {
       ),
     ];
 
-    if (role.canManageFestivals || role == UserRole.designer || role == UserRole.qc) {
+    if (role.canManageFestivals || role == UserRole.designer) {
       list.add(
         _TabSpec(
           item: const BottomNavigationBarItem(
@@ -289,6 +288,11 @@ class AccountScreen extends StatelessWidget {
     final stats = app.stats;
     final p = context.pagePadding;
 
+    final canManageAny = role.canViewClients ||
+        role.canViewPackages ||
+        role.canManageTeam ||
+        role.canManageSettings;
+
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
       child: SafeArea(
@@ -299,30 +303,47 @@ class AccountScreen extends StatelessWidget {
             children: [
               const PageHeader(
                 title: 'Account',
-                subtitle: 'Profile, settings, and sign out',
+                subtitle: 'Profile, workspace settings, and security',
               ),
-              SizedBox(height: context.sectionGap * 0.5),
+              SizedBox(height: context.sectionGap * 0.4),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: p),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Premium User Profile Card
                     Container(
-                      padding: EdgeInsets.all(context.isCompact ? 18 : 24),
+                      padding: EdgeInsets.all(context.isCompact ? 20 : 26),
                       decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(22),
-                        boxShadow: AppShadows.card,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.accent,
+                            Color(0xFF88003E),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.accent.withValues(alpha: 0.28),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                      child: Column(
+                      child: Row(
                         children: [
                           Container(
                             width: context.isCompact ? 64 : 76,
                             height: context.isCompact ? 64 : 76,
                             decoration: BoxDecoration(
-                              color: const Color(0x33FFFFFF),
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(color: const Color(0x55FFFFFF)),
+                              color: const Color(0x28FFFFFF),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0x66FFFFFF),
+                                width: 1.5,
+                              ),
                             ),
                             alignment: Alignment.center,
                             child: Text(
@@ -330,157 +351,213 @@ class AccountScreen extends StatelessWidget {
                                   ? user!.displayName[0].toUpperCase()
                                   : '?',
                               style: AppFonts.montserrat(
-                                size: 30,
+                                size: context.isCompact ? 28 : 34,
                                 weight: FontWeight.w800,
                                 color: const Color(0xFFFFFFFF),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 14),
-                          Text(
-                            user?.displayName ?? '',
-                            textAlign: TextAlign.center,
-                            style: AppFonts.montserrat(
-                              size: 20,
-                              weight: FontWeight.w800,
-                              color: const Color(0xFFFFFFFF),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '@${user?.username ?? ''} · ${user?.role.label ?? ''}',
-                            textAlign: TextAlign.center,
-                            style: AppFonts.poppins(
-                              size: 13,
-                              color: const Color(0xCCFFFFFF),
+                          const SizedBox(width: 18),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user?.displayName ?? 'User',
+                                  style: AppFonts.montserrat(
+                                    size: context.isCompact ? 20 : 22,
+                                    weight: FontWeight.w800,
+                                    color: const Color(0xFFFFFFFF),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0x33FFFFFF),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '@${user?.username ?? ''}',
+                                        style: AppFonts.poppins(
+                                          size: 11.5,
+                                          weight: FontWeight.w600,
+                                          color: const Color(0xFFFFFFFF),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFFFFF),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        user?.role.label ?? '',
+                                        style: AppFonts.montserrat(
+                                          size: 11,
+                                          weight: FontWeight.w800,
+                                          color: AppColors.accent,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 20),
+
+                    // Key Pipeline Metrics Row
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.divider, width: 0.6),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.divider, width: 1.2),
+                        boxShadow: AppShadows.card,
                       ),
                       child: Row(
                         children: [
-                          _miniStat('${stats.total}', 'Jobs', color: const Color(0xFF2196F3)),
-                          _miniStat('${stats.overdueCount}', 'Overdue', color: AppColors.overdue),
-                          _miniStat('${stats.readyToSend}', 'Ready', color: const Color(0xFF4CAF50)),
-                          _miniStat('${stats.sent}', 'Sent', color: const Color(0xFF9C27B0)),
+                          _miniStat('${stats.total}', 'Jobs',
+                              color: const Color(0xFF0284C7),
+                              bgColor: const Color(0xFFE0F2FE)),
+                          _miniStat('${stats.overdueCount}', 'Overdue',
+                              color: AppColors.overdue,
+                              bgColor: const Color(0xFFFEF2F2)),
+                          _miniStat('${stats.readyToSend}', 'Ready',
+                              color: const Color(0xFF16A34A),
+                              bgColor: const Color(0xFFDCFCE7)),
+                          _miniStat('${stats.sent}', 'Sent',
+                              color: const Color(0xFF9333EA),
+                              bgColor: const Color(0xFFF3E8FF)),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    if (role.canViewClients)
-                      _SettingsTile(
-                        icon: CupertinoIcons.person_2,
-                        title: 'Clients',
-                        subtitle: 'Manage client accounts',
+
+                    const SizedBox(height: 24),
+
+                    // Section 1: Studio Operations (Consolidated Management Hub)
+                    if (canManageAny) ...[
+                      Text(
+                        'OPERATIONS & STUDIO',
+                        style: AppFonts.montserrat(
+                          size: 12,
+                          weight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _ModernCardTile(
+                        icon: CupertinoIcons.square_grid_2x2_fill,
+                        title: 'Studio Management',
+                        subtitle: 'Clients, Packages, Poster Gallery, Team & Deadlines',
+                        badge: '5 Modules',
+                        badgeColor: AppColors.accent,
+                        iconColor: AppColors.accent,
+                        iconBgGradient: const [Color(0xFFFCE7F3), Color(0xFFFBCFE8)],
                         onTap: () {
                           Navigator.of(context).push(
-                            CupertinoPageRoute(builder: (_) => const ClientsScreen()),
+                            CupertinoPageRoute(
+                              builder: (_) => const StudioManagementScreen(),
+                            ),
                           );
                         },
                       ),
-                    if (role.canViewPackages)
-                      _SettingsTile(
-                        icon: CupertinoIcons.cube_box,
-                        title: 'Packages',
-                        subtitle: 'Manage client packages',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(builder: (_) => const PackagesScreen()),
-                          );
-                        },
-                      ),
-                    if (role.canManageTeam) ...[
-                      _SettingsTile(
-                        icon: CupertinoIcons.photo_on_rectangle,
-                        title: 'Gallery',
-                        subtitle: 'View all completed posters',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(builder: (_) => const GalleryScreen()),
-                          );
-                        },
-                      ),
-                      _SettingsTile(
-                        icon: CupertinoIcons.person_3,
-                        title: 'Team',
-                        subtitle: 'Manage team members',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(builder: (_) => const TeamScreen()),
-                          );
-                        },
-                      ),
+                      const SizedBox(height: 24),
                     ],
 
-                    if (role.canManageSettings)
-                      _SettingsTile(
-                        icon: CupertinoIcons.slider_horizontal_3,
-                        title: 'Deadline settings',
-                        subtitle: 'Days before event for Design / QC / Ready',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(builder: (_) => const DeadlineSettingsScreen()),
-                          );
-                        },
+                    // Section 2: Security & Preferences
+                    Text(
+                      'SECURITY & PREFERENCES',
+                      style: AppFonts.montserrat(
+                        size: 12,
+                        weight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
                       ),
-
+                    ),
                     const SizedBox(height: 10),
-                    _SettingsTile(
-                      icon: CupertinoIcons.lock_rotation,
-                      title: 'Update password',
-                      subtitle: 'Change your account password',
+
+                    _ModernCardTile(
+                      icon: CupertinoIcons.lock_shield_fill,
+                      title: 'Update Password',
+                      subtitle: 'Change your login credentials & account security',
+                      iconColor: const Color(0xFF4F46E5),
+                      iconBgGradient: const [Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
                       onTap: () {
                         if (user != null) {
                           _updatePassword(context, user);
                         }
                       },
                     ),
-                    _SettingsTile(
-                      icon: CupertinoIcons.info_circle,
-                      title: 'How it works',
-                      subtitle: 'Festival date → auto deadlines → poster URL → WhatsApp',
+
+                    const SizedBox(height: 12),
+
+                    _ModernCardTile(
+                      icon: CupertinoIcons.lightbulb_fill,
+                      title: 'How It Works',
+                      subtitle: 'Production workflow: Festival → Deadlines → QC → WhatsApp',
+                      iconColor: const Color(0xFFD97706),
+                      iconBgGradient: const [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
                       onTap: () {
                         showCupertinoDialog<void>(
                           context: context,
                           builder: (ctx) => CupertinoAlertDialog(
-                            title: const Text('How it works'),
-                            content: const Text(
-                              '1. Add festivals & clients\n'
-                              '2. Assign client × festival (Pipeline)\n'
-                              '3. Designer pastes Drive poster URL\n'
-                              '4. QC approves · Manager sends WhatsApp\n'
-                              '5. Check Alerts for overdue jobs',
+                            title: const Text('Production Workflow Guide'),
+                            content: const Padding(
+                              padding: EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                '1. Manage festivals & add clients in Studio\n'
+                                '2. Assign client × festival in Pipeline\n'
+                                '3. Designer uploads Google Drive poster URL\n'
+                                '4. QC verifies and approves designs\n'
+                                '5. Manager sends WhatsApp poster dispatch\n'
+                                '6. Check Alerts tab for pending or overdue deadlines',
+                                textAlign: TextAlign.left,
+                              ),
                             ),
                             actions: [
                               CupertinoDialogAction(
                                 onPressed: () => Navigator.pop(ctx),
-                                child: const Text('Got it'),
+                                child: const Text('Understood'),
                               ),
                             ],
                           ),
                         );
                       },
                     ),
-                    const SizedBox(height: 28),
+
+                    const SizedBox(height: 32),
+
+                    // Log Out Action
                     PrimaryButton(
-                      label: 'Log out',
+                      label: 'Log Out',
                       icon: CupertinoIcons.square_arrow_right,
                       color: AppColors.accent,
                       onPressed: () async {
                         final ok = await showCupertinoDialog<bool>(
                           context: context,
                           builder: (ctx) => CupertinoAlertDialog(
-                            title: const Text('Log out?'),
-                            content: const Text('You will need your username and password again.'),
+                            title: const Text('Log Out?'),
+                            content: const Text(
+                              'Are you sure you want to sign out of your account?',
+                            ),
                             actions: [
                               CupertinoDialogAction(
                                 onPressed: () => Navigator.pop(ctx, false),
@@ -489,7 +566,7 @@ class AccountScreen extends StatelessWidget {
                               CupertinoDialogAction(
                                 isDestructiveAction: true,
                                 onPressed: () => Navigator.pop(ctx, true),
-                                child: const Text('Log out'),
+                                child: const Text('Log Out'),
                               ),
                             ],
                           ),
@@ -519,18 +596,20 @@ class AccountScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => CupertinoAlertDialog(
-          title: const Text('Update password'),
+          title: const Text('Update Password'),
           content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 8),
               const Text('Enter a new password for your account.'),
               const SizedBox(height: 12),
-              CupertinoTextField(
+              AppTextField(
                 controller: ctrl,
                 placeholder: 'Min 6 characters',
                 obscureText: obscure,
                 suffix: CupertinoButton(
                   padding: const EdgeInsets.only(right: 8),
+                  minSize: 0,
                   onPressed: () => setState(() => obscure = !obscure),
                   child: Icon(
                     obscure ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
@@ -542,8 +621,14 @@ class AccountScreen extends StatelessWidget {
             ],
           ),
           actions: [
-            CupertinoDialogAction(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-            CupertinoDialogAction(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Save'),
+            ),
           ],
         ),
       ),
@@ -559,7 +644,10 @@ class AccountScreen extends StatelessWidget {
               title: const Text('Error'),
               content: Text(e.toString()),
               actions: [
-                CupertinoDialogAction(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('OK'),
+                ),
               ],
             ),
           );
@@ -569,19 +657,30 @@ class AccountScreen extends StatelessWidget {
     ctrl.dispose();
   }
 
-  Widget _miniStat(String value, String label, {Color color = AppColors.textPrimary}) {
+  Widget _miniStat(
+    String value,
+    String label, {
+    required Color color,
+    required Color bgColor,
+  }) {
     return Expanded(
       child: Column(
         children: [
-          Text(
-            value,
-            style: AppFonts.montserrat(
-              size: 24,
-              weight: FontWeight.w700,
-              color: color,
+          Container(
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              value,
+              style: AppFonts.montserrat(
+                size: 20,
+                weight: FontWeight.w800,
+                color: color,
+              ),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 6),
           Text(
             label,
             style: AppFonts.poppins(
@@ -596,57 +695,140 @@ class AccountScreen extends StatelessWidget {
   }
 }
 
-class _SettingsTile extends StatelessWidget {
-  const _SettingsTile({
+class _ModernCardTile extends StatelessWidget {
+  const _ModernCardTile({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.iconColor,
+    required this.iconBgGradient,
     required this.onTap,
+    this.badge,
+    this.badgeColor,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final Color iconColor;
+  final List<Color> iconBgGradient;
   final VoidCallback onTap;
+  final String? badge;
+  final Color? badgeColor;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: EdgeInsets.symmetric(
-            vertical: context.isCompact ? 14 : 16, horizontal: 8),
-        color: const Color(0x00000000),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: context.isCompact ? 24 : 28,
-              color: AppColors.accent,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: AppFonts.montserrat(
-                          size: 15, weight: FontWeight.w700)),
-                  Text(
-                    subtitle,
-                    style: AppFonts.helvetica(size: 12),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.divider, width: 1.2),
+        boxShadow: AppShadows.card,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          splashColor: iconColor.withValues(alpha: 0.08),
+          highlightColor: iconColor.withValues(alpha: 0.04),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: iconBgGradient,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                ],
-              ),
+                  child: Icon(
+                    icon,
+                    color: iconColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              title,
+                              style: AppFonts.montserrat(
+                                size: 15.5,
+                                weight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (badge != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (badgeColor ?? iconColor).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                badge!,
+                                style: AppFonts.poppins(
+                                  size: 11,
+                                  weight: FontWeight.w600,
+                                  color: badgeColor ?? iconColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: AppFonts.poppins(
+                          size: 12,
+                          color: AppColors.textSecondary,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.chevron_forward,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
-            const Icon(CupertinoIcons.chevron_right,
-                size: 16, color: AppColors.textTertiary),
-          ],
+          ),
         ),
       ),
     );
   }
 }
+

@@ -21,9 +21,9 @@ class AppColors {
   static const Color borderSubtle = Color(0xFFE5E7EB);
   static const Color divider = Color(0xFFF3F4F6);
 
-  static const Color overdue = Color(0xFFDC2626);
-  static const Color overdueSoft = Color(0xFFFEF2F2);
-  static const Color overdueBorder = Color(0xFFF5C2C2);
+  static const Color overdue = Color(0xFFD81B60);
+  static const Color overdueSoft = Color(0xFFFCE4EC);
+  static const Color overdueBorder = Color(0xFFF8BBD0);
 
   static const Color success = Color(0xFF000000); // Black for high-contrast actions
   static const Color successSoft = Color(0xFFF3F4F6); // Soft grey background

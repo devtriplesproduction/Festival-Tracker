@@ -1,3 +1,4 @@
+import '../../widgets/ui_kit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -195,20 +196,17 @@ class _DeadlineSettingsScreenState extends State<DeadlineSettingsScreen> {
   Widget build(BuildContext context) {
     final padding = context.pagePadding;
 
-    return Scaffold(
+    return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
+      navigationBar: CupertinoNavigationBar(
+        leading: const AppBackButton(margin: EdgeInsets.only(left: 8)),
+        middle: Text(
           'Deadline Settings',
           style: AppFonts.montserrat(size: 18, weight: FontWeight.w700),
           overflow: TextOverflow.ellipsis,
         ),
       ),
-      body: ResponsiveContent(
+      child: ResponsiveContent(
         maxWidth: 840,
         child: Column(
           children: [
@@ -216,15 +214,8 @@ class _DeadlineSettingsScreenState extends State<DeadlineSettingsScreen> {
               child: ListView(
                 padding: EdgeInsets.all(padding),
                 children: [
-                  Text(
-                    'Deadline Configuration',
-                    style: AppFonts.montserrat(size: context.isCompact ? 20 : 22, weight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Configure when each stage should be completed before the festival date.',
-                    style: AppFonts.helvetica(size: 13, color: AppColors.textSecondary),
-                  ),
+                  
+                  
                   const SizedBox(height: 24),
                   _buildTimelinePreview(),
                   const SizedBox(height: 32),
@@ -763,3 +754,6 @@ class _FixedSendCard extends StatelessWidget {
     );
   }
 }
+
+
+

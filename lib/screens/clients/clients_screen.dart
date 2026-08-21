@@ -11,6 +11,7 @@ import '../../providers/auth_state.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/ui_kit.dart';
+import '../../widgets/date_picker_sheet.dart';
 import '../packages/packages_screen.dart';
 
 class ClientsScreen extends StatelessWidget {
@@ -23,8 +24,7 @@ class ClientsScreen extends StatelessWidget {
     final clients = state.clients;
     final canEdit = role.canManageClients;
 
-    return CupertinoPageScaffold(
-      backgroundColor: AppColors.background,
+    return CupertinoPageScaffold(backgroundColor: AppColors.background, navigationBar: const CupertinoNavigationBar(backgroundColor: Color(0x00000000), border: null, leading: AppBackButton(margin: EdgeInsets.only(left: 8))),
       child: SafeArea(
         bottom: false,
         child: ResponsiveContent(
@@ -36,7 +36,12 @@ class ClientsScreen extends StatelessWidget {
                         PageHeader(
                           title: 'Clients',
                           subtitle: 'WhatsApp contacts for poster delivery',
-                          trailing: canEdit ? NavBarActionButton(label: 'Add', icon: CupertinoIcons.add, onPressed: () => _openEditor(context)) : null,
+                          trailing: canEdit
+                              ? NavBarActionButton(
+                                  label: 'Add',
+                                  icon: CupertinoIcons.add,
+                                  onPressed: () => _openEditor(context))
+                              : null,
                         ),
                         Expanded(
                           child: EmptyState(
@@ -45,7 +50,8 @@ class ClientsScreen extends StatelessWidget {
                             message:
                                 'Add name + WhatsApp. Optionally pick festivals to auto-create jobs.',
                             actionLabel: canEdit ? 'Add client' : null,
-                            onAction: canEdit ? () => _openEditor(context) : null,
+                            onAction:
+                                canEdit ? () => _openEditor(context) : null,
                           ),
                         ),
                       ],
@@ -57,136 +63,159 @@ class ClientsScreen extends StatelessWidget {
                             title: 'Clients',
                             subtitle:
                                 '${clients.length} contact${clients.length == 1 ? '' : 's'} · tap to edit',
-                            trailing: canEdit ? NavBarActionButton(label: 'Add', icon: CupertinoIcons.add, onPressed: () => _openEditor(context)) : null,
+                            trailing: canEdit
+                                ? NavBarActionButton(
+                                    label: 'Add',
+                                    icon: CupertinoIcons.add,
+                                    onPressed: () => _openEditor(context))
+                                : null,
                           ),
                         ),
-                      SliverPadding(
-                        padding: EdgeInsets.only(bottom: context.listBottomPadding),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              if (index == clients.length) {
-                                if (state.hasMoreClients) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 20),
-                                    child: Center(
-                                      child: state.loadingMoreClients
-                                          ? const CupertinoActivityIndicator()
-                                          : CupertinoButton(
-                                              onPressed: () => state.loadMoreClients(),
-                                              child: const Text('Load More'),
-                                            ),
-                                    ),
-                                  );
-                                } else if (clients.isNotEmpty) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 20),
-                                    child: Center(
-                                      child: Text(
-                                        'No more clients',
-                                        style: AppFonts.helvetica(size: 13, color: AppColors.textTertiary),
+                        SliverPadding(
+                          padding: EdgeInsets.only(
+                              bottom: context.listBottomPadding),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                if (index == clients.length) {
+                                  if (state.hasMoreClients) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 20),
+                                      child: Center(
+                                        child: state.loadingMoreClients
+                                            ? const CupertinoActivityIndicator()
+                                            : CupertinoButton(
+                                                onPressed: () =>
+                                                    state.loadMoreClients(),
+                                                child: const Text('Load More'),
+                                              ),
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  } else if (clients.isNotEmpty) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 20),
+                                      child: Center(
+                                        child: Text(
+                                          'No more clients',
+                                          style: AppFonts.helvetica(
+                                              size: 13,
+                                              color: AppColors.textTertiary),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
                                 }
-                                return const SizedBox.shrink();
-                              }
 
-                              final c = clients[index];
-                              final year = DateTime.now().year;
-                              final pkg = state.packageForClientYear(c.id, year);
-                              final progress =
-                                  pkg != null ? state.progressFor(pkg) : null;
-                              return AppCard(
-                                margin: EdgeInsets.symmetric(horizontal: context.pagePadding, vertical: 5),
-                                onTap: canEdit ? () => _openEditor(context, client: c) : null,
-                                child: Row(
-                                  children: [
-                                    LetterAvatar(label: c.name, color: AppColors.teal),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            c.name,
-                                            style: AppFonts.montserrat(
-                                              size: 16,
-                                              weight: FontWeight.w700,
-                                            ),
-                                          ),
-                                          if (c.companyName?.isNotEmpty == true)
+                                final c = clients[index];
+                                final year = DateTime.now().year;
+                                final pkg =
+                                    state.packageForClientYear(c.id, year);
+                                final progress =
+                                    pkg != null ? state.progressFor(pkg) : null;
+                                return AppCard(
+                                  margin: EdgeInsets.symmetric(
+                                      horizontal: context.pagePadding,
+                                      vertical: 5),
+                                  onTap: canEdit
+                                      ? () => _openEditor(context, client: c)
+                                      : null,
+                                  child: Row(
+                                    children: [
+                                      LetterAvatar(
+                                          label: c.name, color: AppColors.teal),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
                                             Text(
-                                              c.companyName!,
-                                              style: AppFonts.poppins(
-                                                size: 12,
-                                                weight: FontWeight.w500,
-                                                color: AppColors.accent,
+                                              c.name,
+                                              style: AppFonts.montserrat(
+                                                size: 16,
+                                                weight: FontWeight.w700,
                                               ),
                                             ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            c.whatsappNumber.isEmpty
-                                                ? 'No WhatsApp'
-                                                : '+${c.whatsappDigits}',
-                                            style: AppFonts.helvetica(
-                                              size: 13,
-                                              color: c.whatsappNumber.isEmpty
-                                                  ? AppColors.textTertiary
-                                                  : AppColors.success,
+                                            if (c.companyName?.isNotEmpty ==
+                                                true)
+                                              Text(
+                                                c.companyName!,
+                                                style: AppFonts.poppins(
+                                                  size: 12,
+                                                  weight: FontWeight.w500,
+                                                  color: AppColors.accent,
+                                                ),
+                                              ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              c.whatsappNumber.isEmpty
+                                                  ? 'No WhatsApp'
+                                                  : '+${c.whatsappDigits}',
+                                              style: AppFonts.helvetica(
+                                                size: 13,
+                                                color: c.whatsappNumber.isEmpty
+                                                    ? AppColors.textTertiary
+                                                    : AppColors.success,
+                                              ),
                                             ),
-                                          ),
-                                          if (pkg != null) ...[
-                                            const SizedBox(height: 4),
-                                            GestureDetector(
-                                              onTap: () => Navigator.of(context).push(
-                                                CupertinoPageRoute(
-                                                  builder: (_) => PackageDetailScreen(
-                                                    packageId: pkg.id,
+                                            if (pkg != null) ...[
+                                              const SizedBox(height: 4),
+                                              GestureDetector(
+                                                onTap: () =>
+                                                    Navigator.of(context).push(
+                                                  CupertinoPageRoute(
+                                                    builder: (_) =>
+                                                        PackageDetailScreen(
+                                                      packageId: pkg.id,
+                                                    ),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  progress == null ||
+                                                          progress.isEmpty
+                                                      ? '$year pkg · ${formatInr(pkg.price)}'
+                                                      : '${formatInr(pkg.price)} · ${progress.label} delivered',
+                                                  style: AppFonts.poppins(
+                                                    size: 11,
+                                                    weight: FontWeight.w700,
+                                                    color: AppColors.purple,
                                                   ),
                                                 ),
                                               ),
-                                              child: Text(
-                                                progress == null || progress.isEmpty
-                                                    ? '$year pkg · ${formatInr(pkg.price)}'
-                                                    : '${formatInr(pkg.price)} · ${progress.label} delivered',
-                                                style: AppFonts.poppins(
-                                                  size: 11,
-                                                  weight: FontWeight.w700,
-                                                  color: AppColors.purple,
-                                                ),
-                                              ),
-                                            ),
-                                          ]  
-                                        ],
-                                      ),
-                                    ),
-                                    if (canEdit) ...[
-                                      CupertinoButton(
-                                        padding: EdgeInsets.zero,
-                                        onPressed: () => _confirmDelete(context, c),
-                                        child: const Icon(
-                                          CupertinoIcons.trash,
-                                          size: 18,
-                                          color: AppColors.textTertiary,
+                                            ]
+                                          ],
                                         ),
                                       ),
-                                      const Icon(
-                                        CupertinoIcons.chevron_right,
-                                        size: 16,
-                                        color: AppColors.textTertiary,
-                                      ),
+                                      if (canEdit) ...[
+                                        CupertinoButton(
+                                          padding: EdgeInsets.zero,
+                                          onPressed: () =>
+                                              _confirmDelete(context, c),
+                                          child: const Icon(
+                                            CupertinoIcons.trash,
+                                            size: 18,
+                                            color: AppColors.textTertiary,
+                                          ),
+                                        ),
+                                        const Icon(
+                                          CupertinoIcons.chevron_right,
+                                          size: 16,
+                                          color: AppColors.textTertiary,
+                                        ),
+                                      ],
                                     ],
-                                  ],
-                                ),
-                              );
-                            },
-                            childCount: clients.length + 1,
+                                  ),
+                                );
+                              },
+                              childCount: clients.length + 1,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
         ),
       ),
     );
@@ -203,9 +232,12 @@ class ClientsScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
         title: const Text('Delete client?'),
-        content: Text('“${client.name}” and related pipeline jobs will be removed.'),
+        content:
+            Text('“${client.name}” and related pipeline jobs will be removed.'),
         actions: [
-          CupertinoDialogAction(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          CupertinoDialogAction(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
@@ -219,7 +251,6 @@ class ClientsScreen extends StatelessWidget {
     }
   }
 }
-
 
 class ClientEditorScreen extends StatefulWidget {
   const ClientEditorScreen({super.key, this.client});
@@ -238,7 +269,25 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
   late final TextEditingController _companyCtrl;
   late final TextEditingController _packagePriceCtrl;
   late Set<String> _selectedFestivals;
+  DateTime? _packageStartDate;
   bool _saving = false;
+  bool _initDate = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initDate) {
+      if (widget.client != null) {
+        final state = context.read<AppState>();
+        final activePkgs = state.clientPackages
+            .where((p) => p.clientId == widget.client!.id && p.isActive);
+        _packageStartDate = activePkgs.isNotEmpty
+            ? activePkgs.first.startDate
+            : widget.client!.createdAt;
+      }
+      _initDate = true;
+    }
+  }
 
   /// Local mobile digits only (no country code). +91 is fixed in the UI.
   static String _localPhoneDigits(String? stored) {
@@ -272,7 +321,8 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
     _phoneCtrl = TextEditingController(
       text: _localPhoneDigits(widget.client?.whatsappNumber),
     );
-    _companyCtrl = TextEditingController(text: widget.client?.companyName ?? '');
+    _companyCtrl =
+        TextEditingController(text: widget.client?.companyName ?? '');
     final price = widget.client?.packagePrice;
     _packagePriceCtrl = TextEditingController(
       text: price == null
@@ -280,6 +330,9 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
           : (price % 1 == 0 ? price.toInt().toString() : price.toString()),
     );
     _selectedFestivals = {...?widget.client?.festivalIds};
+    if (widget.client == null) {
+      _packageStartDate = DateTime.now();
+    }
   }
 
   @override
@@ -292,6 +345,7 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
       await showCupertinoDialog<void>(
@@ -300,7 +354,8 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
           title: const Text('Name required'),
           content: const Text('Please enter a client name.'),
           actions: [
-            CupertinoDialogAction(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+            CupertinoDialogAction(
+                onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
           ],
         ),
       );
@@ -316,7 +371,8 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
           context: context,
           builder: (ctx) => CupertinoAlertDialog(
             title: const Text('Invalid package price'),
-            content: const Text('Enter a valid amount in rupees, or leave blank.'),
+            content:
+                const Text('Enter a valid amount in rupees, or leave blank.'),
             actions: [
               CupertinoDialogAction(
                 onPressed: () => Navigator.pop(ctx),
@@ -339,6 +395,7 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
           notes: widget.client?.notes ?? '',
           festivalIds: _selectedFestivals.toList(),
           packagePrice: packagePrice,
+          packageStartDate: _packageStartDate,
           syncAssignments: true,
           createdByUid: auth.user?.id,
         );
@@ -350,9 +407,9 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
     final isEdit = widget.client != null;
     final festivals = context.watch<AppState>().festivals;
 
-    return CupertinoPageScaffold(
-      backgroundColor: AppColors.background,
+    return CupertinoPageScaffold(backgroundColor: AppColors.background,
       navigationBar: CupertinoNavigationBar(
+        leading: const AppBackButton(margin: EdgeInsets.only(left: 8)),
         backgroundColor: AppColors.background.withValues(alpha: 0.94),
         border: null,
         middle: Text(
@@ -372,12 +429,15 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
           children: [
             FormFieldBlock(
               label: 'Name',
-              child: AppTextField(controller: _nameCtrl, placeholder: 'Client or business name'),
+              child: AppTextField(
+                  controller: _nameCtrl,
+                  placeholder: 'Client or business name'),
             ),
             const SizedBox(height: 16),
             FormFieldBlock(
               label: 'Company (optional)',
-              child: AppTextField(controller: _companyCtrl, placeholder: 'Company name'),
+              child: AppTextField(
+                  controller: _companyCtrl, placeholder: 'Company name'),
             ),
             const SizedBox(height: 16),
             FormFieldBlock(
@@ -403,7 +463,8 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
                   if (limited != value) {
                     _phoneCtrl.value = TextEditingValue(
                       text: limited,
-                      selection: TextSelection.collapsed(offset: limited.length),
+                      selection:
+                          TextSelection.collapsed(offset: limited.length),
                     );
                   }
                 },
@@ -414,7 +475,7 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
               label: 'Package price (₹)',
               hint: isEdit
                   ? 'Client-specific yearly package price. Updates the active package.'
-                  : 'Different per client. Creates a 1-year package from today; renewal alert 15 days before.',
+                  : 'Different per client. Creates a 1-year package from the start date; renewal alert 15 days before.',
               child: AppTextField(
                 controller: _packagePriceCtrl,
                 placeholder: 'e.g. 50000',
@@ -426,6 +487,52 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
                     size: 15,
                     weight: FontWeight.w600,
                     color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FormFieldBlock(
+              label: 'Package start date',
+              hint: isEdit
+                  ? 'Change the active package start date.'
+                  : 'Defaults to today. Sets the 1-year package cycle.',
+              child: GestureDetector(
+                onTap: () async {
+                  final picked = await showAppDatePicker(
+                    context: context,
+                    initialDate: _packageStartDate ?? DateTime.now(),
+                    title: 'Start date',
+                  );
+                  if (picked != null) {
+                    setState(() => _packageStartDate = picked);
+                  }
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.borderSubtle),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _packageStartDate != null
+                            ? formatDate(_packageStartDate!)
+                            : 'Select date',
+                        style: AppFonts.poppins(
+                          size: 15,
+                          color: _packageStartDate != null
+                              ? AppColors.textPrimary
+                              : AppColors.textTertiary,
+                        ),
+                      ),
+                      const Icon(CupertinoIcons.calendar,
+                          size: 20, color: AppColors.textTertiary),
+                    ],
                   ),
                 ),
               ),
@@ -442,7 +549,8 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
                         if (_selectedFestivals.length == festivals.length) {
                           _selectedFestivals.clear();
                         } else {
-                          _selectedFestivals = festivals.map((f) => f.id).toSet();
+                          _selectedFestivals =
+                              festivals.map((f) => f.id).toSet();
                         }
                       });
                     },
@@ -462,7 +570,8 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
             const SizedBox(height: 6),
             Text(
               'Optional — creates pipeline jobs when saved',
-              style: AppFonts.helvetica(size: 12, color: AppColors.textTertiary),
+              style:
+                  AppFonts.helvetica(size: 12, color: AppColors.textTertiary),
             ),
             const SizedBox(height: 10),
             if (festivals.isEmpty)
@@ -472,7 +581,8 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
                 final selected = _selectedFestivals.contains(f.id);
                 return AppCard(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   highlightColor: selected ? AppColors.accent : null,
                   onTap: () {
                     setState(() {
@@ -486,14 +596,19 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        selected ? CupertinoIcons.checkmark_square_fill : CupertinoIcons.square,
-                        color: selected ? AppColors.accent : AppColors.textTertiary,
+                        selected
+                            ? CupertinoIcons.checkmark_square_fill
+                            : CupertinoIcons.square,
+                        color: selected
+                            ? AppColors.accent
+                            : AppColors.textTertiary,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           f.name,
-                          style: AppFonts.poppins(size: 15, weight: FontWeight.w600),
+                          style: AppFonts.poppins(
+                              size: 15, weight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -512,3 +627,7 @@ class _ClientEditorScreenState extends State<ClientEditorScreen> {
     );
   }
 }
+
+
+
+

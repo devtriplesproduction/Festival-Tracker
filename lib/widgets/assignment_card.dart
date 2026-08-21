@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 import '../core/utils/date_formatters.dart';
@@ -76,7 +77,11 @@ class _AssignmentCardState extends State<AssignmentCard> {
         compact ? 12 : 16,
         compact ? 12 : 16,
       ),
-      onTap: () => _showStatusSheet(context),
+      onTap: () {
+        setState(() {
+          _isExpanded = !_isExpanded;
+        });
+      },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -120,22 +125,18 @@ class _AssignmentCardState extends State<AssignmentCard> {
                   ],
                 ),
               ),
-              StatusPill(status: widget.assignment.status, overdue: overdue),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => _showStatusSheet(context),
+                child: StatusPill(status: widget.assignment.status, overdue: overdue),
+              ),
               const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                  });
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Icon(
-                    _isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
-                    size: 20,
-                    color: AppColors.textTertiary,
-                  ),
+              Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Icon(
+                  _isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                  size: 20,
+                  color: AppColors.textTertiary,
                 ),
               ),
             ],
@@ -143,11 +144,15 @@ class _AssignmentCardState extends State<AssignmentCard> {
 
           if (_isExpanded) ...[
             const SizedBox(height: 14),
-            _PipelineTimeline(
-              assignment: widget.assignment,
-              overdue: overdue,
-              daysLate: daysLate,
-              deadline: deadline,
+            GestureDetector(
+              onTap: () => _showStatusSheet(context),
+              behavior: HitTestBehavior.opaque,
+              child: _PipelineTimeline(
+                assignment: widget.assignment,
+                overdue: overdue,
+                daysLate: daysLate,
+                deadline: deadline,
+              ),
             ),
             if (widget.assignment.hasPoster) ...[
               const SizedBox(height: 10),

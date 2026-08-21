@@ -52,11 +52,12 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAhYw2e25QZ06DdAL4rFHm7kFeKZ_3F9L4',
-    appId: '1:67998510522:web:c51cfd45c2a51aa94ac183',
+    apiKey: 'AIzaSyAigPXweWdPgf-ifXBCAJYML2LnevtSRmY',
+    appId: '1:67998510522:ios:6ba64e8fa1f9d14b4ac183',
     messagingSenderId: '67998510522',
     projectId: 'posterflow-6c0cb',
     storageBucket: 'posterflow-6c0cb.firebasestorage.app',
+    iosClientId: '67998510522-fkjgtjs2ok173i9a2uhscaojl6sh4hmd.apps.googleusercontent.com',
     iosBundleId: 'com.triples.festivalTracker',
   );
 }

@@ -72,6 +72,7 @@ class NotificationLog {
     required this.message,
     required this.sentAt,
     required this.recipientRole,
+    this.clientId = '',
     this.readBy = const [],
   });
 
@@ -85,6 +86,7 @@ class NotificationLog {
 
   /// Role string: admin | designer | manager | qc | all
   final String recipientRole;
+  final String clientId;
   final List<String> readBy;
 
   NotificationLog copyWith({
@@ -96,6 +98,7 @@ class NotificationLog {
     String? message,
     DateTime? sentAt,
     String? recipientRole,
+    String? clientId,
     List<String>? readBy,
   }) {
     return NotificationLog(
@@ -107,6 +110,7 @@ class NotificationLog {
       message: message ?? this.message,
       sentAt: sentAt ?? this.sentAt,
       recipientRole: recipientRole ?? this.recipientRole,
+      clientId: clientId ?? this.clientId,
       readBy: readBy ?? this.readBy,
     );
   }
@@ -119,6 +123,7 @@ class NotificationLog {
         'message': message,
         'sentAt': sentAt.toUtc(),
         'recipientRole': recipientRole,
+        'clientId': clientId,
         'readBy': readBy,
       };
 
@@ -132,6 +137,7 @@ class NotificationLog {
       message: map['message'] as String? ?? '',
       sentAt: _parseDate(map['sentAt']),
       recipientRole: map['recipientRole'] as String? ?? 'all',
+      clientId: map['clientId'] as String? ?? '',
       readBy: (map['readBy'] as List?)?.cast<String>() ?? (map['read'] == true ? ['legacy_read'] : []),
     );
   }

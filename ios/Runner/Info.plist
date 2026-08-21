@@ -72,5 +72,26 @@
 		<string>http</string>
 		<string>whatsapp</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.67998510522-fkjgtjs2ok173i9a2uhscaojl6sh4hmd</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Festival Tracker requires access to your photo library to select and upload festival posters and artwork.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Festival Tracker requires access to the camera to take and upload photos of posters.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Festival Tracker requires access to the microphone for recording audio/video attachments.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

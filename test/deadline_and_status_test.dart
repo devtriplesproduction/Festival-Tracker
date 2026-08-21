@@ -1,5 +1,6 @@
 import 'package:festival_tracker/models/assignment.dart';
 import 'package:festival_tracker/models/assignment_status.dart';
+import 'package:festival_tracker/services/whatsapp_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -13,10 +14,10 @@ void main() {
         festivalDate: festival,
       );
 
-      expect(a.designDueDate, DateTime(2026, 11, 1));
-      expect(a.qcDueDate, DateTime(2026, 11, 3));
-      expect(a.readyDueDate, DateTime(2026, 11, 5));
-      expect(a.sendDueDate, DateTime(2026, 11, 7));
+      expect(a.designDueDate, DateTime(2026, 11, 5));
+      expect(a.qcDueDate, DateTime(2026, 11, 6));
+      expect(a.readyDueDate, DateTime(2026, 11, 7));
+      expect(a.sendDueDate, DateTime(2026, 11, 8));
     });
 
     test('current stage deadline follows status', () {
@@ -50,10 +51,30 @@ void main() {
         festivalDate: festival,
         status: AssignmentStatus.design,
       );
-      // Design due = Aug 8; check on Aug 10
-      expect(a.isOverdue(DateTime(2026, 8, 10)), isTrue);
-      expect(a.isOverdue(DateTime(2026, 8, 8)), isFalse);
-      expect(a.isOverdue(DateTime(2026, 8, 7)), isFalse);
+      // Design due = Aug 12; check on Aug 13
+      expect(a.isOverdue(DateTime(2026, 8, 13)), isTrue);
+      expect(a.isOverdue(DateTime(2026, 8, 12)), isFalse);
+      expect(a.isOverdue(DateTime(2026, 8, 11)), isFalse);
+    });
+  });
+
+  group('WhatsAppService', () {
+    test('generateLink attaches design URL in message', () {
+      final link = WhatsAppService.generateLink(
+        phoneNumber: '+91 98765 43210',
+        clientName: 'ABC Jewels',
+        festivalName: 'Diwali',
+        posterUrl: 'https://res.cloudinary.com/demo/image/upload/poster123.jpg',
+        designerNotes: 'Special gold foil finish applied',
+      );
+
+      expect(link, contains('wa.me/919876543210'));
+      final decoded = Uri.decodeComponent(link);
+      expect(decoded, contains('ABC Jewels'));
+      expect(decoded, contains('*Diwali*'));
+      expect(decoded, contains('Attached Design'));
+      expect(decoded, contains('https://res.cloudinary.com/demo/image/upload/poster123.jpg'));
+      expect(decoded, contains('Special gold foil finish applied'));
     });
   });
 
