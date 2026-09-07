@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -274,6 +274,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   final _passCtrl = TextEditingController();
   UserRole _role = UserRole.designer;
   bool _saving = false;
+  bool _obscurePass = true;
 
   @override
   void dispose() {
@@ -361,24 +362,19 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
             FormFieldBlock(
               label: 'Temporary password',
               hint: 'Min 6 characters',
-              child: StatefulBuilder(
-                builder: (context, setState) {
-                  bool obscure = true;
-                  return AppTextField(
-                    controller: _passCtrl,
-                    placeholder: '••••••••',
-                    obscureText: obscure,
-                    suffix: CupertinoButton(
-                      padding: const EdgeInsets.only(right: 8),
-                      onPressed: () => setState(() => obscure = !obscure),
-                      child: Icon(
-                        obscure ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
-                        size: 20,
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                  );
-                },
+              child: AppTextField(
+                controller: _passCtrl,
+                placeholder: '••••••••',
+                obscureText: _obscurePass,
+                suffix: CupertinoButton(
+                  padding: const EdgeInsets.only(right: 8),
+                  onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                  child: Icon(
+                    _obscurePass ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                    size: 20,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 20),
