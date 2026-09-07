@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -534,11 +535,27 @@ class FirebaseAuthRepository implements AuthRepository {
     }
 
     final currentUser = _auth.currentUser;
-    if (currentUser == null || currentUser.uid != userId) {
-      throw StateError('You can only change your own password.');
+    if (currentUser == null) {
+      throw StateError('You must be signed in to change passwords.');
     }
 
-    await currentUser.updatePassword(newPassword);
+    if (currentUser.uid == userId) {
+      await currentUser.updatePassword(newPassword);
+    } else {
+      try {
+        final callable = FirebaseFunctions.instance.httpsCallable('updateUserPassword');
+        final result = await callable.call(<String, dynamic>{
+          'userId': userId,
+          'newPassword': newPassword,
+        });
+        if (result.data['success'] != true) {
+          throw StateError('Failed to change password on server.');
+        }
+      } catch (e) {
+        throw StateError('Failed to change password: $e');
+      }
+    }
+
     await _usersCol.doc(userId).update({
       'updatedAt': FieldValue.serverTimestamp(),
     });

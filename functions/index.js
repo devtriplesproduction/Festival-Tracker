@@ -152,3 +152,35 @@ exports.scheduledPackageCheck = onSchedule("0 0 * * *", async (event) => {
     }
   }
 });
+
+/**
+ * HTTP callable function to update a user's password.
+ * Only accessible by an Admin.
+ */
+exports.updateUserPassword = onCall(async (request) => {
+  const auth = request.auth;
+  const data = request.data;
+
+  if (!auth) {
+    throw new Error("Unauthenticated");
+  }
+
+  const db = admin.firestore();
+  const callerDoc = await db.collection("users").doc(auth.uid).get();
+  if (!callerDoc.exists || callerDoc.data().role !== "admin") {
+    throw new Error("Permission denied. Only admins can update passwords.");
+  }
+
+  const targetUid = data.userId;
+  const newPassword = data.newPassword;
+
+  if (!targetUid || !newPassword || newPassword.length < 6) {
+    throw new Error("Invalid parameters.");
+  }
+
+  await admin.auth().updateUser(targetUid, {
+    password: newPassword,
+  });
+
+  return { success: true };
+});
